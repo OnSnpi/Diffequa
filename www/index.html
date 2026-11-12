@@ -2,10 +2,45 @@
 <html lang="cs">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta id="meta-theme-color" name="theme-color" content="#f0f2f5">
   <title>Diffequa &ndash; Logic Game</title>
   <link id="app-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ffffff'/%3E%3Crect x='36' y='12' width='28' height='28' rx='2' fill='none' stroke='%23eb8672' stroke-width='4.5'/%3E%3Ccircle cx='32' cy='68' r='15' fill='%238cc64d'/%3E%3Cpolygon points='68,52 84,82 52,82' fill='none' stroke='%23e6c24f' stroke-width='4.5' stroke-linejoin='round'/%3E%3C/svg%3E">
   <style>
+    :root {
+      --bg: #f0f2f5;
+      --card: #ffffff;
+      --card-board: #ffffff;
+      --border: #dcdfe4;
+      --border-board: #dcdfe4;
+      --text: #222222;
+      --text-board: #222222;
+      --text-muted: #475569;
+      --accent: #2563eb;
+      --accent-dark: #1d4ed8;
+      --status-bg: transparent;
+      --status-border: transparent;
+      --status-text: #222222;
+      --shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    }
+
+    body.royal-mode {
+      --bg: #0f172a;
+      --card: #162033;
+      --card-board: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
+      --border: #334155;
+      --border-board: rgba(251, 191, 36, 0.35);
+      --text: #fef3c7;
+      --text-board: #fde68a;
+      --text-muted: #cbd5e1;
+      --accent: #f59e0b;
+      --accent-dark: #fde68a;
+      --status-bg: rgba(245, 158, 11, 0.14);
+      --status-border: rgba(251, 191, 36, 0.40);
+      --status-text: #fde68a;
+      --shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    }
+
     * {
       box-sizing: border-box;
       user-select: none;
@@ -14,20 +49,16 @@
 
     body {
       margin: 0;
-      padding: 12px;
+      padding: 12px 12px max(14px, env(safe-area-inset-bottom)) 12px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      background-color: #f0f2f5;
-      color: #222;
+      background-color: var(--bg);
+      color: var(--text);
       display: flex;
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
+      min-height: 100dvh;
       transition: background-color 0.25s, color 0.25s;
-    }
-
-    body.royal-mode {
-      background-color: #0f172a;
-      color: #f8fafc;
     }
 
     .header {
@@ -38,17 +69,18 @@
       align-items: center;
       margin-bottom: 10px;
       padding: 8px 12px;
-      background: #ffffff;
+      background: var(--card);
+      border: 1px solid var(--border);
       border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      box-shadow: var(--shadow);
       font-size: 14px;
       font-weight: 600;
+      color: var(--text);
     }
 
     body.royal-mode .header {
-      background: #1e293b;
-      color: #f1f5f9;
-      border: 1px solid #334155;
+      color: var(--text-board);
+      text-shadow: 0 1px 6px rgba(245, 158, 11, 0.35);
     }
 
     .brand-title {
@@ -60,8 +92,12 @@
       font-size: 15px;
     }
 
-    body.royal-mode .brand-title {
-      color: #fbbf24;
+    body.royal-mode .brand-title span:last-child {
+      background: linear-gradient(135deg, #fef08a 0%, #f59e0b 55%, #b45309 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
     }
 
     .icon-btn {
@@ -77,9 +113,9 @@
     }
 
     body.royal-mode .icon-btn {
-      background: #334155;
-      border-color: #475569;
-      color: #fbbf24;
+      background: #1e293b;
+      border-color: rgba(251, 191, 36, 0.40);
+      color: #fde68a;
     }
 
     .icon-btn:active {
@@ -94,23 +130,38 @@
       text-align: center;
       font-size: 13.5px;
       font-weight: 600;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       padding: 4px 8px;
       display: flex;
       align-items: center;
       justify-content: center;
       border-radius: 8px;
-      transition: background-color 0.2s, color 0.2s;
+      border: 1px solid var(--status-border);
+      background: var(--status-bg);
+      color: var(--status-text);
+      transition: background-color 0.2s, color 0.2s, border-color 0.2s;
       line-height: 1.25;
     }
 
-    .status-ok { color: #1b7a38; background: #e3f7e9; }
-    .status-err { color: #b82525; background: #fde8e8; }
-    .status-info { color: #1e5bb8; background: #e6f0ff; }
+    .status-ok { color: #1b7a38; background: #e3f7e9; border-color: transparent; }
+    .status-err { color: #b82525; background: #fde8e8; border-color: transparent; }
+    .status-info { color: #1e5bb8; background: #e6f0ff; border-color: transparent; }
 
-    body.royal-mode .status-ok { color: #fde68a; background: rgba(245, 158, 11, 0.2); }
-    body.royal-mode .status-err { color: #fca5a5; background: rgba(239, 68, 68, 0.2); }
-    body.royal-mode .status-info { color: #bae6fd; background: rgba(56, 189, 248, 0.18); }
+    body.royal-mode .status-ok {
+      color: #fde68a;
+      background: rgba(245, 158, 11, 0.18);
+      border-color: #fbbf24;
+    }
+    body.royal-mode .status-err {
+      color: #fca5a5;
+      background: rgba(239, 68, 68, 0.22);
+      border-color: #f87171;
+    }
+    body.royal-mode .status-info {
+      color: #fde68a;
+      background: rgba(245, 158, 11, 0.14);
+      border-color: rgba(251, 191, 36, 0.40);
+    }
 
     .board {
       width: 100%;
@@ -125,18 +176,16 @@
       position: relative;
       width: 100%;
       height: 96px;
-      background: #ffffff;
-      border: 2px solid #dcdfe4;
+      background: var(--card-board);
+      border: 2px solid var(--border-board);
       border-radius: 12px;
       cursor: pointer;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
       transition: transform 0.12s, border-color 0.12s, background-color 0.12s, box-shadow 0.12s;
     }
 
     body.royal-mode .card {
-      background: linear-gradient(145deg, #1e293b, #111827);
-      border-color: #334155;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+      box-shadow: var(--shadow);
     }
 
     .card:active {
@@ -150,9 +199,9 @@
     }
 
     body.royal-mode .card.selected {
-      border-color: #fbbf24;
-      background: linear-gradient(145deg, #292524, #1c1917);
-      box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.45);
+      border-color: #fde68a;
+      background: radial-gradient(circle at top, #292524 0%, #162033 100%);
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.55);
     }
 
     .card.hint {
@@ -162,9 +211,9 @@
     }
 
     body.royal-mode .card.hint {
-      border-color: #38bdf8;
-      background: linear-gradient(145deg, #0c4a6e, #0f172a);
-      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.45);
+      border-color: #fbbf24;
+      background: radial-gradient(circle at top, #332711 0%, #0f172a 100%);
+      box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.45);
     }
 
     .card.empty {
@@ -208,11 +257,14 @@
       overflow: visible;
     }
 
+    /* Spodní lišta přilepená dolů ke kraji obrazovky stejně jako v Hominu */
     .controls {
       width: 100%;
       max-width: 440px;
       display: flex;
       gap: 6px;
+      margin-top: auto;
+      padding-top: 8px;
     }
 
     button {
@@ -224,15 +276,16 @@
       border-radius: 10px;
       cursor: pointer;
       background: #ffffff;
-      color: #333;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.08);
-      transition: background 0.15s;
+      color: #333333;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+      transition: background 0.15s, border-color 0.15s;
     }
 
     body.royal-mode button {
-      background: #1e293b;
-      color: #f1f5f9;
-      border: 1px solid #334155;
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
     }
 
     button:active {
@@ -245,9 +298,10 @@
     }
 
     body.royal-mode button.primary {
-      background: linear-gradient(135deg, #d97706, #b45309);
-      color: #ffffff;
-      border: none;
+      background: linear-gradient(135deg, #fde047, #f59e0b, #b45309);
+      border: 1px solid #fde68a;
+      color: #0f172a;
+      font-weight: 700;
     }
 
     button.primary:active {
@@ -263,7 +317,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0, 0, 0, 0.65);
       justify-content: center;
       align-items: center;
       padding: 14px;
@@ -271,14 +325,15 @@
     }
 
     .modal {
-      background: #fff;
-      color: #222;
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
       padding: 18px;
       border-radius: 16px;
       max-width: 390px;
       width: 100%;
       text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
       max-height: 92vh;
       overflow-y: auto;
       position: relative;
@@ -288,14 +343,18 @@
     .modal h2 {
       margin-top: 0;
       margin-bottom: 10px;
-      color: #111;
+      color: var(--text);
       font-size: 19px;
+    }
+
+    body.royal-mode .modal h2 {
+      color: #fde68a;
     }
 
     .section-title {
       font-size: 13px;
       font-weight: 700;
-      color: #334155;
+      color: var(--text-muted);
       text-align: left;
       margin: 12px 0 6px 0;
       display: flex;
@@ -307,7 +366,7 @@
       text-align: left;
       font-size: 13.5px;
       line-height: 1.45;
-      color: #333;
+      color: var(--text);
     }
 
     .help-body p {
@@ -322,6 +381,12 @@
       margin: 10px 0;
     }
 
+    body.royal-mode .help-box {
+      background: #0f172a;
+      border-color: var(--border);
+      color: var(--text);
+    }
+
     .help-box ul {
       margin: 6px 0 0 0;
       padding-left: 18px;
@@ -329,6 +394,17 @@
 
     .help-box li {
       margin-bottom: 4px;
+    }
+
+    .help-example-box {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+
+    body.royal-mode .help-example-box {
+      background: rgba(245, 158, 11, 0.14);
+      border-color: rgba(251, 191, 36, 0.40);
+      color: #fde68a;
     }
 
     .color-row {
@@ -342,6 +418,12 @@
       margin-bottom: 6px;
       font-size: 13.5px;
       font-weight: 600;
+    }
+
+    body.royal-mode .color-row {
+      background: #0f172a;
+      border-color: var(--border);
+      color: var(--text);
     }
 
     input[type="color"] {
@@ -369,11 +451,23 @@
       border-radius: 10px;
     }
 
+    body.royal-mode .lang-btn {
+      background: #0f172a;
+      color: var(--text-muted);
+      border-color: var(--border);
+    }
+
     .lang-btn.active {
       border-color: #2563eb;
       background: #dbeafe;
       color: #1e40af;
       font-weight: 700;
+    }
+
+    body.royal-mode .lang-btn.active {
+      background: rgba(245, 158, 11, 0.14);
+      border-color: #f59e0b;
+      color: #fde68a;
     }
 
     .presets {
@@ -393,11 +487,23 @@
       min-width: 22%;
     }
 
+    body.royal-mode .preset-btn {
+      background: #0f172a;
+      color: var(--text-muted);
+      border-color: var(--border);
+    }
+
     .preset-btn.gold-unlocked {
       background: linear-gradient(135deg, #1e293b, #0f172a);
       border: 1.5px solid #f59e0b;
-      color: #fbbf24;
+      color: #fde68a;
       font-weight: 700;
+    }
+
+    body.royal-mode .preset-btn.gold-unlocked {
+      background: rgba(245, 158, 11, 0.14);
+      border-color: #f59e0b;
+      color: #fde68a;
     }
 
     .shapes-grid {
@@ -424,12 +530,25 @@
       transition: all 0.12s;
     }
 
+    body.royal-mode .shape-opt {
+      background: #0f172a;
+      border-color: var(--border);
+      color: var(--text-muted);
+    }
+
     .shape-opt.active {
       border-color: #2563eb;
       background: #dbeafe;
       color: #1e40af;
       box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
       font-weight: 700;
+    }
+
+    body.royal-mode .shape-opt.active {
+      background: rgba(245, 158, 11, 0.14);
+      border-color: #f59e0b;
+      color: #fde68a;
+      box-shadow: none;
     }
 
     .shape-opt.locked {
@@ -439,10 +558,20 @@
       cursor: pointer;
     }
 
+    body.royal-mode .shape-opt.locked {
+      background: #0f172a;
+    }
+
     .shape-opt.bonus-unlocked {
       border-color: #f59e0b;
       background: #ffffff;
       color: #92400e;
+    }
+
+    body.royal-mode .shape-opt.bonus-unlocked {
+      background: #0f172a;
+      border-color: rgba(245, 158, 11, 0.55);
+      color: #fde68a;
     }
 
     .shape-opt.bonus-unlocked.active {
@@ -451,6 +580,13 @@
       color: #451a03;
       box-shadow: 0 0 0 2.5px rgba(217, 119, 6, 0.45);
       font-weight: 700;
+    }
+
+    body.royal-mode .shape-opt.bonus-unlocked.active {
+      background: rgba(245, 158, 11, 0.14);
+      border-color: #f59e0b;
+      color: #fde68a;
+      box-shadow: none;
     }
 
     .shape-check {
@@ -470,9 +606,10 @@
       line-height: 1;
     }
 
-    .shape-opt.bonus-unlocked.active .shape-check {
-      background: #78350f;
-      color: #fef3c7;
+    .shape-opt.bonus-unlocked.active .shape-check,
+    body.royal-mode .shape-opt.active .shape-check {
+      background: #f59e0b;
+      color: #0f172a;
     }
 
     .shape-opt svg {
@@ -492,6 +629,12 @@
       line-height: 1.35;
     }
 
+    body.royal-mode .unlock-hint-box {
+      background: #0f172a;
+      border-color: var(--border);
+      color: var(--text-muted);
+    }
+
     .trophy-banner {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
@@ -505,10 +648,16 @@
       align-items: center;
     }
 
+    body.royal-mode .trophy-banner {
+      background: #0f172a;
+      border-color: var(--border);
+      color: var(--text);
+    }
+
     .royal-info-box {
-      background: linear-gradient(135deg, #1e293b, #0f172a);
+      background: rgba(245, 158, 11, 0.14);
       color: #fde68a;
-      border: 1px solid #f59e0b;
+      border: 1px solid rgba(251, 191, 36, 0.40);
       border-radius: 10px;
       padding: 8px 10px;
       margin-bottom: 8px;
@@ -530,16 +679,21 @@
       align-items: center;
     }
 
+    body.royal-mode .end-logo-box {
+      background: #0f172a;
+      border-color: var(--border);
+    }
+
     .end-logo-box.perfect {
-      background: linear-gradient(135deg, #1e293b, #0f172a);
-      border: 3px solid #f59e0b;
-      box-shadow: 0 0 22px rgba(245, 158, 11, 0.55);
+      background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
+      border: 2px solid #f59e0b;
+      box-shadow: 0 0 22px rgba(245, 158, 11, 0.45);
     }
 
     .perfect-badge {
       display: inline-block;
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: #ffffff;
+      background: linear-gradient(135deg, #fde047, #f59e0b, #b45309);
+      color: #0f172a;
       font-size: 12px;
       font-weight: 700;
       padding: 4px 12px;
@@ -557,6 +711,12 @@
       border-radius: 10px;
       margin: 10px 0;
       font-weight: 600;
+    }
+
+    body.royal-mode .reward-notice {
+      background: rgba(245, 158, 11, 0.14);
+      border-color: rgba(251, 191, 36, 0.40);
+      color: #fde68a;
     }
 
     #confetti-layer {
@@ -622,7 +782,7 @@
 
       <div id="trophy-banner" class="trophy-banner" style="cursor: pointer;">
         <span id="lbl-trophies">&#128081; Vy&#269;i&#353;t&#283;n&#233; stoly (27/27):</span>
-        <strong id="perfect-count-display" style="color: #d97706; font-size: 15px;">0</strong>
+        <strong id="perfect-count-display" style="color: #f59e0b; font-size: 15px;">0</strong>
       </div>
 
       <div class="section-title">
@@ -690,11 +850,11 @@
       <div id="end-logo" class="end-logo-box"></div>
       <div id="end-perfect-badge" class="perfect-badge" style="display: none;"></div>
       <h2 id="end-title"></h2>
-      <p id="end-subtitle" style="font-size: 14px; color: #475569; margin: 6px 0;"></p>
+      <p id="end-subtitle" style="font-size: 14px; color: var(--text-muted); margin: 6px 0;"></p>
       <p id="end-score-line" style="font-size: 17px; font-weight: bold; margin: 10px 0;"></p>
       <div id="end-reward-box" class="reward-notice" style="display: none;"></div>
       <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
-        <button type="button" id="btn-end-undo" style="background: #f1f5f9; border: 1px solid #cbd5e1;"></button>
+        <button type="button" id="btn-end-undo"></button>
         <button type="button" id="btn-play-again" class="primary"></button>
       </div>
     </div>
@@ -800,12 +960,12 @@
                 '<li><strong>Barva:</strong> t\u0159i r\u016Fzn\u00E9 barvy (lze upravit v \u2699)</li>' +
               '</ul></div>' +
               '<p><strong>Zlat\u00E9 pravidlo:</strong> U vybran\u00E9 trojice mus\u00ED b\u00FDt ka\u017Ed\u00E1 z t\u011Bchto 4 vlastnost\u00ED u v\u0161ech t\u0159\u00ED karet bu\u010F <strong>zcela stejn\u00E1</strong> (<em>equal</em>), nebo u ka\u017Ed\u00E9 karty <strong>jin\u00E1</strong> (<em>different</em>).</p>' +
-              '<div class="help-box" style="background: #f0fdf4; border-color: #bbf7d0;">' +
+              '<div class="help-box help-example-box">' +
                 '<strong>P\u0159\u00EDklad platn\u00E9 trojice:</strong><br>' +
                 'V\u0161echny 3 karty maj\u00ED <strong>stejn\u00FD tvar</strong>, <strong>stejnou barvu</strong>, ale <strong>r\u016Fzn\u00FD po\u010Det</strong> (1, 2 a 3) a <strong>r\u016Fznou v\u00FDpl\u0148</strong> (pr\u00E1zdn\u00E1, \u0161rafovan\u00E1, pln\u00E1).' +
               '</div>' +
-              '<p style="color: #b91c1c;"><strong>Pozor:</strong> Pokud maj\u00ED nap\u0159. 2 karty stejnou barvu a 3. karta jinou, trojice neplat\u00ED!</p>' +
-              '<p style="font-size: 12.5px; color: #92400e;">\uD83D\uDC51 <strong>Odm\u011Bny:</strong> Poda\u0159\u00ED-li se ti vy\u010Distit cel\u00FD st\u016Fl do posledn\u00ED karty (27/27), postupn\u011B v Nastaven\u00ED (\u2699) odemkne\u0161 3 bonusov\u00E9 tvary (K\u0159\u00ED\u017E X, Prstenec, Korunu) a Kr\u00E1lovskou zlatou edici.</p>'
+              '<p style="color: #f87171;"><strong>Pozor:</strong> Pokud maj\u00ED nap\u0159. 2 karty stejnou barvu a 3. karta jinou, trojice neplat\u00ED!</p>' +
+              '<p style="font-size: 12.5px; opacity: 0.9;">\uD83D\uDC51 <strong>Odm\u011Bny:</strong> Poda\u0159\u00ED-li se ti vy\u010Distit cel\u00FD st\u016Fl do posledn\u00ED karty (27/27), postupn\u011B v Nastaven\u00ED (\u2699) odemkne\u0161 3 bonusov\u00E9 tvary (K\u0159\u00ED\u017E X, Prstenec, Korunu) a Kr\u00E1lovskou zlatou edici.</p>'
             );
           }
         },
@@ -888,12 +1048,12 @@
                 '<li><strong>Color:</strong> three distinct colors (customizable in \u2699)</li>' +
               '</ul></div>' +
               '<p><strong>The Golden Rule:</strong> For a chosen triple, each of the 4 features must be either <strong>all the same</strong> (<em>equal</em>) across all three cards, or <strong>all different</strong> (<em>different</em>) on each card.</p>' +
-              '<div class="help-box" style="background: #f0fdf4; border-color: #bbf7d0;">' +
+              '<div class="help-box help-example-box">' +
                 '<strong>Example of a valid triple:</strong><br>' +
                 'All 3 cards have the <strong>same shape</strong> and <strong>same color</strong>, but <strong>different counts</strong> (1, 2, and 3) and <strong>different fills</strong> (empty, striped, solid).' +
               '</div>' +
-              '<p style="color: #b91c1c;"><strong>Watch out:</strong> If 2 cards share the same color and the 3rd card has a different color, it is NOT valid!</p>' +
-              '<p style="font-size: 12.5px; color: #92400e;">\uD83D\uDC51 <strong>Rewards:</strong> Clear the entire board down to the last card (27/27) to progressively unlock 3 bonus shapes (Cross X, Ring, Crown) and the Royal Gold Edition in Settings (\u2699).</p>'
+              '<p style="color: #f87171;"><strong>Watch out:</strong> If 2 cards share the same color and the 3rd card has a different color, it is NOT valid!</p>' +
+              '<p style="font-size: 12.5px; opacity: 0.9;">\uD83D\uDC51 <strong>Rewards:</strong> Clear the entire board down to the last card (27/27) to progressively unlock 3 bonus shapes (Cross X, Ring, Crown) and the Royal Gold Edition in Settings (\u2699).</p>'
             );
           }
         }
@@ -1135,10 +1295,13 @@
       }
 
       function applyThemeMode() {
+        var metaTheme = document.getElementById('meta-theme-color');
         if (royalMode) {
           document.body.classList.add('royal-mode');
+          if (metaTheme) metaTheme.setAttribute('content', '#0f172a');
         } else {
           document.body.classList.remove('royal-mode');
+          if (metaTheme) metaTheme.setAttribute('content', '#f0f2f5');
         }
         var royalInfo = document.getElementById('royal-active-info');
         var customColorsBox = document.getElementById('custom-colors-box');
@@ -1161,9 +1324,9 @@
             hintBox.style.display = 'none';
           } else {
             hintBox.style.display = 'block';
-            hintBox.style.background = '#f8fafc';
-            hintBox.style.borderColor = '#e2e8f0';
-            hintBox.style.color = '#64748b';
+            hintBox.style.background = '';
+            hintBox.style.borderColor = '';
+            hintBox.style.color = '';
             hintBox.innerHTML = t('unlockHintDefault');
           }
         }
@@ -1242,7 +1405,7 @@
               '<stop offset="100%" stop-color="#b45309" />' +
             '</linearGradient>' +
             '<linearGradient id="metal-1" x1="0%" y1="0%" x2="100%" y2="100%">' +
-              '<stop offset="0%" stop-color="#fbcfe8" />' +
+              '<stop offset="0%" stop-color="#fce7f3" />' +
               '<stop offset="45%" stop-color="#f472b6" />' +
               '<stop offset="100%" stop-color="#be185d" />' +
             '</linearGradient>' +
@@ -1289,8 +1452,13 @@
             }
             item.className = cls;
 
-            var strokeCol = isSelected ? (isBonus ? '#78350f' : '#1d4ed8') : (isBonus && !locked ? '#d97706' : '#64748b');
-            var fillCol = (isSelected && isBonus) ? 'rgba(255,255,255,0.35)' : 'none';
+            var strokeCol;
+            if (royalMode) {
+              strokeCol = isSelected ? '#fde68a' : (isBonus && !locked ? '#f59e0b' : '#94a3b8');
+            } else {
+              strokeCol = isSelected ? (isBonus ? '#78350f' : '#1d4ed8') : (isBonus && !locked ? '#d97706' : '#64748b');
+            }
+            var fillCol = (isSelected && isBonus) ? (royalMode ? 'rgba(245,158,11,0.22)' : 'rgba(255,255,255,0.35)') : 'none';
             var labelText = locked
               ? '&#128274; ' + sh.unlockLevel + t('winSuffix')
               : (isBonus ? '&#128081; ' + sName : sName);
@@ -1305,9 +1473,9 @@
               item.onclick = function() {
                 var hintBox = document.getElementById('unlock-hint-box');
                 if (hintBox && perfectGamesCount < 3) {
-                  hintBox.style.background = '#fef3c7';
+                  hintBox.style.background = royalMode ? 'rgba(245, 158, 11, 0.18)' : '#fef3c7';
                   hintBox.style.borderColor = '#f59e0b';
-                  hintBox.style.color = '#92400e';
+                  hintBox.style.color = royalMode ? '#fde68a' : '#92400e';
                   var extraTxt = (sh.id === 'crown') ? t('unlockHintCrownExtra') : '';
                   hintBox.innerHTML = t('unlockHintLockedShape')
                     .replace('{name}', sName)
@@ -1342,7 +1510,11 @@
 
         if (counter) {
           counter.textContent = t('selectedCounter').replace('{n}', selectedShapes.length);
-          counter.style.color = (selectedShapes.length === 3) ? '#16a34a' : '#dc2626';
+          if (royalMode) {
+            counter.style.color = (selectedShapes.length === 3) ? '#fde68a' : '#f87171';
+          } else {
+            counter.style.color = (selectedShapes.length === 3) ? '#16a34a' : '#dc2626';
+          }
         }
         if (closeBtn) {
           closeBtn.disabled = (selectedShapes.length !== 3);
@@ -1361,6 +1533,7 @@
       var hintIndices = [];
       var hintCursor = -1;
       var score = 0;
+      var isGameOver = false;
       var statusTimeout = null;
 
       function cloneCardsArray(arr) {
@@ -1387,7 +1560,8 @@
               deck: deck,
               board: board,
               score: score,
-              history: historyStack
+              history: historyStack,
+              isGameOver: isGameOver
             }));
           }
         } catch (e) {}
@@ -1404,6 +1578,7 @@
                 board = data.board;
                 score = data.score || 0;
                 historyStack = Array.isArray(data.history) ? data.history : [];
+                isGameOver = Boolean(data.isGameOver);
                 return true;
               }
             }
@@ -1424,7 +1599,7 @@
       }
 
       function undoLastMove() {
-        if (historyStack.length === 0) return;
+        if (isGameOver || historyStack.length === 0) return;
         var prev = historyStack.pop();
         deck = prev.deck;
         board = prev.board;
@@ -1432,6 +1607,7 @@
         selectedIndices = [];
         hintIndices = [];
         hintCursor = -1;
+        isGameOver = false;
         document.getElementById('end-overlay').style.display = 'none';
         document.getElementById('confetti-layer').innerHTML = '';
         setStatus(t('msgUndo'), 'info');
@@ -1461,6 +1637,11 @@
       }
 
       function showEndModal(isPerfect, remainingCount) {
+        isGameOver = true;
+        historyStack = [];
+        saveGameState();
+        renderBoard();
+
         updateLogos();
         var logoBox = document.getElementById('end-logo');
         var badge = document.getElementById('end-perfect-badge');
@@ -1502,9 +1683,7 @@
           title.textContent = t('endNormalTitle');
           subtitle.textContent = t('endNormalSub').replace('{n}', remainingCount);
           rewardBox.style.display = 'none';
-          if (endUndoBtn) {
-            endUndoBtn.style.display = (historyStack.length > 0) ? 'block' : 'none';
-          }
+          if (endUndoBtn) endUndoBtn.style.display = 'none';
         }
 
         document.getElementById('end-overlay').style.display = 'flex';
@@ -1688,11 +1867,12 @@
 
         var undoBtn = document.getElementById('btn-undo');
         if (undoBtn) {
-          undoBtn.disabled = (historyStack.length === 0);
+          undoBtn.disabled = (isGameOver || historyStack.length === 0);
         }
       }
 
       function onCardClick(index) {
+        if (isGameOver) return;
         var pos = selectedIndices.indexOf(index);
         if (pos !== -1) {
           selectedIndices.splice(pos, 1);
@@ -1737,6 +1917,7 @@
         hintIndices = [];
         hintCursor = -1;
         score = 0;
+        isGameOver = false;
         document.getElementById('end-overlay').style.display = 'none';
         document.getElementById('confetti-layer').innerHTML = '';
         setStatus(t('defaultStatus'));
@@ -1745,7 +1926,6 @@
         renderBoard();
       }
 
-      // Přepínání jazyka
       document.getElementById('lang-cs').onclick = function() {
         currentLang = 'cs';
         savePrefs();
@@ -1767,6 +1947,7 @@
               userColors[colorIdx] = e.target.value;
               applyThemeMode();
               rebuildSvgPatterns();
+              renderShapesPicker();
               savePrefs();
               renderBoard();
             };
@@ -1789,6 +1970,7 @@
               userColors = [presets[presetIdx][0], presets[presetIdx][1], presets[presetIdx][2]];
               applyThemeMode();
               rebuildSvgPatterns();
+              renderShapesPicker();
               savePrefs();
               renderBoard();
             };
@@ -1802,6 +1984,7 @@
           royalMode = true;
           applyThemeMode();
           rebuildSvgPatterns();
+          renderShapesPicker();
           savePrefs();
           renderBoard();
         };
@@ -1819,7 +2002,6 @@
           score = 27;
           deck = [];
           for (var i = 0; i < 16; i++) board[i] = null;
-          renderBoard();
           showEndModal(true, 0);
         }
       };
@@ -1868,6 +2050,7 @@
       document.getElementById('btn-end-undo').onclick = undoLastMove;
 
       document.getElementById('btn-hint').onclick = function() {
+        if (isGameOver) return;
         var sets = findAllSetsOnBoard();
         if (sets.length > 0) {
           hintCursor = (hintCursor + 1) % sets.length;
@@ -1900,7 +2083,9 @@
       window.onresize = syncCardHeights;
 
       if (loadGameState()) {
-        setStatus(t('msgResume'), 'info');
+        if (!isGameOver) {
+          setStatus(t('msgResume'), 'info');
+        }
         ensureValidBoard();
         renderBoard();
       } else {
