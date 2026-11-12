@@ -43,6 +43,7 @@ jobs:
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
           npx cap init "Diffequa" "cz.diffequa.game" --web-dir=www
           npx cap add android
+          sed -i 's/android:name=".MainActivity"/android:name=".MainActivity" android:screenOrientation="portrait"/g' android/app/src/main/AndroidManifest.xml
 
       - name: Set auto-incrementing versionCode
         run: |
