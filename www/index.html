@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Diffequa &ndash; Logic Game</title>
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ffffff'/%3E%3Crect x='36' y='12' width='28' height='28' rx='2' fill='none' stroke='%23eb8672' stroke-width='4.5'/%3E%3Ccircle cx='32' cy='68' r='15' fill='%238cc64d'/%3E%3Cpolygon points='68,52 84,82 52,82' fill='none' stroke='%23e6c24f' stroke-width='4.5' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      padding: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: #f0f2f5;
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      transition: background-color 0.25s, color 0.25s;
+    }
+
+    body.royal-mode {
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+
+    .header {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    body.royal-mode .header {
+      background: #1e293b;
+      color: #f1f5f9;
+      border: 1px solid #334155;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #2563eb;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    body.royal-mode .brand-title {
+      color: #fbbf24;
+    }
+
+    .icon-btn {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 5px 9px;
+      font-size: 15px;
+      cursor: pointer;
+      color: #334155;
+      flex: 0 0 auto;
+      box-shadow: none;
+    }
+
+    body.royal-mode .icon-btn {
+      background: #334155;
+      border-color: #475569;
+      color: #fbbf24;
+    }
+
+    .icon-btn:active {
+      background: #e2e8f0;
+    }
+
+    .status-bar {
+      width: 100%;
+      max-width: 440px;
+      min-height: 36px;
+      text-align: center;
+      font-size: 13.5px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      padding: 4px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      transition: all 0.2s;
+      line-height: 1.25;
+    }
+
+    .status-ok { color: #1b7a38; background: #e3f7e9; }
+    .status-err { color: #b82525; background: #fde8e8; }
+    .status-info { color: #1e5bb8; background: #e6f0ff; }
+
+    body.royal-mode .status-ok { color: #fde68a; background: rgba(245, 158, 11, 0.2); }
+    body.royal-mode .status-err { color: #fca5a5; background: rgba(239, 68, 68, 0.2); }
+    body.royal-mode .status-info { color: #bae6fd; background: rgba(56, 189, 248, 0.18); }
+
+    .board {
+      width: 100%;
+      max-width: 440px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      height: 96px;
+      background: #ffffff;
+      border: 2px solid #dcdfe4;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+      transition: transform 0.12s, border-color 0.12s, background-color 0.12s, box-shadow 0.12s;
+    }
+
+    body.royal-mode .card {
+      background: linear-gradient(145deg, #1e293b, #111827);
+      border-color: #334155;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+    }
+
+    .card:active {
+      transform: scale(0.96);
+    }
+
+    .card.selected {
+      border-color: #2563eb;
+      background-color: #eff6ff;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+    }
+
+    body.royal-mode .card.selected {
+      border-color: #fbbf24;
+      background: linear-gradient(145deg, #292524, #1c1917);
+      box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.45);
+    }
+
+    .card.hint {
+      border-color: #f59e0b;
+      background-color: #fffbeb;
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35);
+    }
+
+    body.royal-mode .card.hint {
+      border-color: #38bdf8;
+      background: linear-gradient(145deg, #0c4a6e, #0f172a);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.45);
+    }
+
+    .card.empty {
+      background: transparent;
+      border: 2px dashed #d1d5db;
+      box-shadow: none;
+      cursor: default;
+    }
+
+    body.royal-mode .card.empty {
+      background: transparent;
+      border-color: #334155;
+      box-shadow: none;
+    }
+
+    .symbols-wrap {
+      position: absolute;
+      inset: 0;
+      padding: 4%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 2%;
+    }
+
+    .symbols-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2%;
+      width: 100%;
+      height: 45%;
+    }
+
+    .sym {
+      height: 100%;
+      width: auto;
+      aspect-ratio: 1 / 1;
+      display: block;
+      overflow: visible;
+    }
+
+    .controls {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      gap: 6px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px 6px;
+      font-size: 13.5px;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      background: #ffffff;
+      color: #333;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+      transition: background 0.15s;
+    }
+
+    body.royal-mode button {
+      background: #1e293b;
+      color: #f1f5f9;
+      border: 1px solid #334155;
+    }
+
+    button:active {
+      background: #e5e7eb;
+    }
+
+    button.primary {
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    body.royal-mode button.primary {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      color: #ffffff;
+      border: none;
+    }
+
+    button.primary:active {
+      background: #1d4ed8;
+    }
+
+    button:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+      padding: 14px;
+      z-index: 100;
+    }
+
+    .modal {
+      background: #fff;
+      color: #222;
+      padding: 18px;
+      border-radius: 16px;
+      max-width: 390px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+      max-height: 92vh;
+      overflow-y: auto;
+      position: relative;
+      z-index: 102;
+    }
+
+    .modal h2 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #111;
+      font-size: 19px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+      text-align: left;
+      margin: 12px 0 6px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .help-body {
+      text-align: left;
+      font-size: 13.5px;
+      line-height: 1.45;
+      color: #333;
+    }
+
+    .help-body p {
+      margin: 8px 0;
+    }
+
+    .help-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin: 10px 0;
+    }
+
+    .help-box ul {
+      margin: 6px 0 0 0;
+      padding-left: 18px;
+    }
+
+    .help-box li {
+      margin-bottom: 4px;
+    }
+
+    .color-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      font-size: 13.5px;
+      font-weight: 600;
+    }
+
+    input[type="color"] {
+      width: 42px;
+      height: 28px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .lang-switch {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .lang-btn {
+      font-size: 12.5px;
+      padding: 8px 6px;
+      background: #f8fafc;
+      color: #475569;
+      box-shadow: none;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+    }
+
+    .lang-btn.active {
+      border-color: #2563eb;
+      background: #dbeafe;
+      color: #1e40af;
+      font-weight: 700;
+    }
+
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 8px 0;
+    }
+
+    .preset-btn {
+      font-size: 12px;
+      padding: 7px 6px;
+      background: #f1f5f9;
+      color: #1e293b;
+      box-shadow: none;
+      border: 1px solid #cbd5e1;
+      min-width: 22%;
+    }
+
+    .preset-btn.gold-unlocked {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1.5px solid #f59e0b;
+      color: #fbbf24;
+      font-weight: 700;
+    }
+
+    .shapes-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .shape-opt {
+      position: relative;
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 7px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      color: #475569;
+      transition: all 0.12s;
+    }
+
+    .shape-opt.active {
+      border-color: #2563eb;
+      background: #dbeafe;
+      color: #1e40af;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+      font-weight: 700;
+    }
+
+    .shape-opt.locked {
+      opacity: 0.65;
+      background: #f1f5f9;
+      border-style: dashed;
+      cursor: pointer;
+    }
+
+    .shape-opt.bonus-unlocked {
+      border-color: #f59e0b;
+      background: #ffffff;
+      color: #92400e;
+    }
+
+    .shape-opt.bonus-unlocked.active {
+      border-color: #b45309;
+      background: linear-gradient(135deg, #fde68a, #f59e0b);
+      color: #451a03;
+      box-shadow: 0 0 0 2.5px rgba(217, 119, 6, 0.45);
+      font-weight: 700;
+    }
+
+    .shape-check {
+      position: absolute;
+      top: 4px;
+      right: 5px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #2563eb;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .shape-opt.bonus-unlocked.active .shape-check {
+      background: #78350f;
+      color: #fef3c7;
+    }
+
+    .shape-opt svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    .unlock-hint-box {
+      font-size: 11.5px;
+      color: #64748b;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 6px 8px;
+      margin-bottom: 8px;
+      text-align: left;
+      line-height: 1.35;
+    }
+
+    .trophy-banner {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: #334155;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .royal-info-box {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      color: #fde68a;
+      border: 1px solid #f59e0b;
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      text-align: left;
+      line-height: 1.35;
+    }
+
+    .end-logo-box {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 12px auto;
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .end-logo-box.perfect {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 3px solid #f59e0b;
+      box-shadow: 0 0 22px rgba(245, 158, 11, 0.55);
+    }
+
+    .perfect-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+      letter-spacing: 0.3px;
+    }
+
+    .reward-notice {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #92400e;
+      font-size: 13px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      margin: 10px 0;
+      font-weight: 600;
+    }
+
+    #confetti-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 101;
+    }
+
+    .confetti-sym {
+      position: absolute;
+      top: -40px;
+      width: 24px;
+      height: 24px;
+      animation: fallSpin linear forwards;
+    }
+
+    @keyframes fallSpin {
+      0% {
+        transform: translateY(-20px) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(105vh) rotate(540deg);
+        opacity: 0.2;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="svg-defs-box" style="width: 0; height: 0; overflow: hidden; position: absolute;"></div>
+  <div id="confetti-layer"></div>
+
+  <div class="header">
+    <div><span id="lbl-found">Nalezeno</span>: <span id="score">0</span></div>
+    <div class="brand-title">
+      <span id="header-logo" style="width: 26px; height: 26px; display: inline-flex; align-items: center;"></span>
+      <span>Diffequa</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span><span id="lbl-deck">Bal&#237;&#269;ek</span>: <span id="deck-count">65</span></span>
+      <button type="button" id="btn-settings" class="icon-btn" title="Nastaven&#237;">&#9881;</button>
+    </div>
+  </div>
+
+  <div id="status" class="status-bar"></div>
+
+  <div id="board" class="board"></div>
+
+  <div class="controls">
+    <button type="button" id="btn-undo" disabled>&#8617; Zp&#283;t</button>
+    <button type="button" id="btn-help">N&#225;vod</button>
+    <button type="button" id="btn-hint">N&#225;pov&#283;da</button>
+    <button type="button" id="btn-new" class="primary">Nov&#225; hra</button>
+  </div>
+
+  <!-- Okno s nastavením jazyka, barev, tvarů a statistikou -->
+  <div id="settings-overlay" class="overlay">
+    <div class="modal">
+      <h2 id="settings-title" style="cursor: pointer;">Nastaven&#237; hry</h2>
+
+      <div id="trophy-banner" class="trophy-banner" style="cursor: pointer;">
+        <span id="lbl-trophies">&#128081; Vy&#269;i&#353;t&#283;n&#233; stoly (27/27):</span>
+        <strong id="perfect-count-display" style="color: #d97706; font-size: 15px;">0</strong>
+      </div>
+
+      <div class="section-title">
+        <span id="lbl-lang-title">Jazyk / Language</span>
+      </div>
+      <div class="lang-switch">
+        <button type="button" id="lang-cs" class="lang-btn">&#127464;&#127487; &#268;e&#353;tina</button>
+        <button type="button" id="lang-en" class="lang-btn">&#127468;&#127463; English</button>
+      </div>
+
+      <div class="section-title">
+        <span id="lbl-shapes-title">V&#253;b&#283;r 3 tvar&#367;</span>
+        <span id="shapes-counter" style="color: #2563eb;"></span>
+      </div>
+      <div id="shapes-grid" class="shapes-grid"></div>
+
+      <div id="unlock-hint-box" class="unlock-hint-box"></div>
+
+      <div class="section-title">
+        <span id="lbl-colors-title">V&#253;b&#283;r 3 barev</span>
+      </div>
+
+      <div id="royal-active-info" class="royal-info-box" style="display: none;"></div>
+
+      <div id="custom-colors-box">
+        <div class="color-row">
+          <span id="lbl-col-0">1. barva symbol&#367;</span>
+          <input type="color" id="col-pick-0" value="#eb8672">
+        </div>
+        <div class="color-row">
+          <span id="lbl-col-1">2. barva symbol&#367;</span>
+          <input type="color" id="col-pick-1" value="#8cc64d">
+        </div>
+        <div class="color-row">
+          <span id="lbl-col-2">3. barva symbol&#367;</span>
+          <input type="color" id="col-pick-2" value="#e6c24f">
+        </div>
+      </div>
+
+      <div id="color-warning" style="display: none; font-size: 12px; color: #b45309; background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 6px 8px; margin-top: 6px; text-align: left;"></div>
+
+      <div class="presets">
+        <button type="button" id="preset-0" class="preset-btn">Standardn&#237;</button>
+        <button type="button" id="preset-1" class="preset-btn">Z&#225;kladn&#237;</button>
+        <button type="button" id="preset-2" class="preset-btn">Kontrastn&#237;</button>
+        <button type="button" id="preset-gold" class="preset-btn gold-unlocked" style="display: none;">&#128081; Zlat&#225; edice</button>
+      </div>
+
+      <button type="button" id="btn-close-settings" class="primary" style="width: 100%; margin-top: 6px;">Ulo&#382;it a zav&#345;&#237;t</button>
+    </div>
+  </div>
+
+  <!-- Okno s návodem -->
+  <div id="help-overlay" class="overlay">
+    <div class="modal">
+      <h2 id="help-title">Jak hr&#225;t Diffequa</h2>
+      <div id="help-body" class="help-body"></div>
+      <button type="button" id="btn-close-help" class="primary" style="width: 100%; margin-top: 12px;">Rozum&#237;m, hr&#225;t</button>
+    </div>
+  </div>
+
+  <!-- Okno na konci hry -->
+  <div id="end-overlay" class="overlay">
+    <div class="modal">
+      <div id="end-logo" class="end-logo-box"></div>
+      <div id="end-perfect-badge" class="perfect-badge" style="display: none;"></div>
+      <h2 id="end-title"></h2>
+      <p id="end-subtitle" style="font-size: 14px; color: #475569; margin: 6px 0;"></p>
+      <p id="end-score-line" style="font-size: 17px; font-weight: bold; margin: 10px 0;"></p>
+      <div id="end-reward-box" class="reward-notice" style="display: none;"></div>
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
+        <button type="button" id="btn-end-undo" style="background: #f1f5f9; border: 1px solid #cbd5e1;"></button>
+        <button type="button" id="btn-play-again" class="primary"></button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.onload = function() {
+      var STORAGE_PREFS = 'diffequa_prefs_v9';
+      var STORAGE_GAME = 'diffequa_saved_game_v2';
+      var DEFAULT_COLORS = ['#eb8672', '#8cc64d', '#e6c24f'];
+      var ROYAL_COLORS = ['#f59e0b', '#f472b6', '#cbd5e1'];
+      var DEFAULT_SHAPES = ['square', 'circle', 'triangle'];
+
+      function detectDeviceLanguage() {
+        try {
+          var navLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+          if (navLang.indexOf('cs') === 0 || navLang.indexOf('sk') === 0) {
+            return 'cs';
+          }
+        } catch (e) {}
+        return 'en';
+      }
+
+      var currentLang = detectDeviceLanguage();
+
+      var I18N = {
+        cs: {
+          pageTitle: 'Diffequa \u2013 Logick\u00E1 hra',
+          found: 'Nalezeno',
+          deck: 'Bal\u00ED\u010Dek',
+          settingsTooltip: 'Nastaven\u00ED',
+          defaultStatus: 'Najdi 3 karty: ka\u017Ed\u00E1 vlastnost v\u0161ude stejn\u00E1, nebo v\u0161ude jin\u00E1',
+          btnUndo: '\u21A9 Zp\u011Bt',
+          btnUndoTitle: 'Vr\u00E1tit posledn\u00ED tah',
+          btnHelp: 'N\u00E1vod',
+          btnHint: 'N\u00E1pov\u011Bda',
+          btnNew: 'Nov\u00E1 hra',
+          settingsTitle: 'Nastaven\u00ED hry',
+          trophiesLabel: '\uD83D\uDC51 Vy\u010Di\u0161t\u011Bn\u00E9 stoly (27/27):',
+          langTitle: 'Jazyk / Language',
+          shapesTitle: 'V\u00FDb\u011Br 3 tvar\u016F',
+          selectedCounter: 'Vybr\u00E1no: {n}/3',
+          winSuffix: '. v\u00FDhra',
+          unlockHintDefault: '\uD83D\uDD12 <strong>Jak odemknout bonusy:</strong> Vy\u010Disti cel\u00FD hern\u00ED st\u016Fl do posledn\u00ED karty (27/27 trojic). Za 1., 2. a 3. \u010Dist\u00FD st\u016Fl se postupn\u011B odemkne <strong>K\u0159\u00ED\u017E X</strong>, <strong>Prstenec</strong> a jako vrchol <strong>Koruna + Kr\u00E1lovsk\u00E1 zlat\u00E1 edice</strong>.',
+          unlockHintLockedShape: '\uD83D\uDD12 <strong>Tvar {name}</strong> se odemkne po dosa\u017Een\u00ED <strong>{level}. vy\u010Di\u0161t\u011Bn\u00E9ho stolu (27/27)</strong>{extra}!',
+          unlockHintCrownExtra: ' (spole\u010Dn\u011B se Zlatou edic\u00ED barev)',
+          colorsTitle: 'V\u00FDb\u011Br 3 barev',
+          royalInfo: '\uD83D\uDC51 <strong>Kr\u00E1lovsk\u00E1 edice aktivn\u00ED:</strong> \u017Dlut\u00E9 zlato, R\u016F\u017Eov\u00E9 zlato a Platina s kovov\u00FDm leskem na sametov\u011B tmav\u00FDch kart\u00E1ch.',
+          col0: '1. barva symbol\u016F',
+          col1: '2. barva symbol\u016F',
+          col2: '3. barva symbol\u016F',
+          preset0: 'Standardn\u00ED',
+          preset1: 'Z\u00E1kladn\u00ED',
+          preset2: 'Kontrastn\u00ED',
+          presetGold: '\uD83D\uDC51 Zlat\u00E1 edice',
+          btnSaveClose: 'Ulo\u017Eit a zav\u0159\u00EDt',
+          warnBoth: 'Pozor: Barvy jsou si velmi podobn\u00E9 a n\u011Bkter\u00E1 je na b\u00EDl\u00E9 kart\u011B m\u00E1lo vid\u011Bt.',
+          warnClose: 'Pozor: Zvolen\u00E9 barvy jsou si velmi podobn\u00E9, ve h\u0159e se mohou pl\u00E9st.',
+          warnLight: 'Pozor: N\u011Bkter\u00E1 z barev je velmi sv\u011Btl\u00E1 a bude na kart\u011B h\u016F\u0159e vid\u011Bt.',
+          helpTitle: 'Jak hr\u00E1t Diffequa',
+          helpClose: 'Rozum\u00EDm, hr\u00E1t',
+          helpOr: 'nebo',
+          endPerfectBadge: '\uD83D\uDC51 DOKONAL\u00C1 HRA \u2013 \u010CIST\u00DD ST\u016EL',
+          endPerfectTitle: 'Mistrovsk\u00FD v\u00FDkon!',
+          endPerfectSub: 'Sebral jsi v\u0161ech 81 karet do posledn\u00EDho kusu (0 zb\u00FDvaj\u00EDc\u00EDch).',
+          endNormalTitle: 'Konec kola',
+          endNormalSub: 'Na stole zbylo {n} karet, ze kter\u00FDch u\u017E nelze slo\u017Eit dal\u0161\u00ED trojici.',
+          endScoreLine: 'Nalezeno: {score} / 27 trojic',
+          reward1: '\uD83C\uDF89 Odem\u010Dena 1. odm\u011Bna v Nastaven\u00ED (\u2699):<br>Nov\u00FD bonusov\u00FD tvar <strong>K\u0159\u00ED\u017E X</strong>!',
+          reward2: '\uD83C\uDF89 Odem\u010Dena 2. odm\u011Bna v Nastaven\u00ED (\u2699):<br>Nov\u00FD bonusov\u00FD tvar <strong>Prstenec</strong>!',
+          reward3: '\uD83C\uDF89 Odem\u010Dena nejvy\u0161\u0161\u00ED odm\u011Bna v Nastaven\u00ED (\u2699):<br><strong>Tvar Koruna</strong> a <strong>Kr\u00E1lovsk\u00E1 zlat\u00E1 edice</strong>!',
+          rewardMore: '\uD83D\uDC51 Celkem vy\u010Di\u0161t\u011Bn\u00FDch stol\u016F: <strong>{n}</strong>',
+          btnEndUndo: '\u21A9 Vr\u00E1tit posledn\u00ED tah a zkusit jinak',
+          btnPlayAgain: 'Hr\u00E1t znovu',
+          msgSetOk: 'V\u00FDb\u011Brn\u011B! Spr\u00E1vn\u00E1 trojice Diffequa.',
+          msgSetErr: 'Tato trojice nespl\u0148uje pravidlo \u2013 zkus jinou.',
+          msgReshuffle: '\u017D\u00E1dn\u00E1 platn\u00E1 trojice na stole \u2013 karty byly prom\u00EDch\u00E1ny!',
+          msgUndo: 'Posledn\u00ED tah byl vr\u00E1cen zp\u011Bt.',
+          msgHint: 'N\u00E1pov\u011Bda ({cur}/{tot}) \u2013 najdi t\u0159et\u00ED kartu!',
+          msgResume: 'Pokra\u010Duje\u0161 v rozehran\u00E9 h\u0159e.',
+          shapes: {
+            square: '\u010Ctverec',
+            circle: 'Kru\u017Enice',
+            triangle: 'Troj\u00FAheln\u00EDk',
+            diamond: 'Koso\u010Dtverec',
+            hexagon: '\u0160esti\u00FAheln\u00EDk',
+            star: 'Hv\u011Bzda',
+            heart: 'Srdce',
+            cross: 'K\u0159\u00ED\u017E',
+            drop: 'Kapka',
+            xcross: 'K\u0159\u00ED\u017E X',
+            donut: 'Prstenec',
+            crown: 'Koruna'
+          },
+          buildHelpHtml: function(shapesListStr) {
+            return (
+              '<p>C\u00EDlem hry je naj\u00EDt <strong>trojici karet</strong>, kter\u00E1 tvo\u0159\u00ED spr\u00E1vnou kombinaci.</p>' +
+              '<p>Ka\u017Ed\u00E1 karta m\u00E1 <strong>4 vlastnosti</strong>:</p>' +
+              '<div class="help-box"><ul>' +
+                '<li><strong>Tvar:</strong> ' + shapesListStr + ' (lze zm\u011Bnit v \u2699)</li>' +
+                '<li><strong>Po\u010Det:</strong> 1, 2 nebo 3 symboly</li>' +
+                '<li><strong>V\u00FDpl\u0148:</strong> pr\u00E1zdn\u00E1, \u0161rafovan\u00E1 nebo pln\u00E1</li>' +
+                '<li><strong>Barva:</strong> t\u0159i r\u016Fzn\u00E9 barvy (lze upravit v \u2699)</li>' +
+              '</ul></div>' +
+              '<p><strong>Zlat\u00E9 pravidlo:</strong> U vybran\u00E9 trojice mus\u00ED b\u00FDt ka\u017Ed\u00E1 z t\u011Bchto 4 vlastnost\u00ED u v\u0161ech t\u0159\u00ED karet bu\u010F <strong>zcela stejn\u00E1</strong> (<em>equal</em>), nebo u ka\u017Ed\u00E9 karty <strong>jin\u00E1</strong> (<em>different</em>).</p>' +
+              '<div class="help-box" style="background: #f0fdf4; border-color: #bbf7d0;">' +
+                '<strong>P\u0159\u00EDklad platn\u00E9 trojice:</strong><br>' +
+                'V\u0161echny 3 karty maj\u00ED <strong>stejn\u00FD tvar</strong>, <strong>stejnou barvu</strong>, ale <strong>r\u016Fzn\u00FD po\u010Det</strong> (1, 2 a 3) a <strong>r\u016Fznou v\u00FDpl\u0148</strong> (pr\u00E1zdn\u00E1, \u0161rafovan\u00E1, pln\u00E1).' +
+              '</div>' +
+              '<p style="color: #b91c1c;"><strong>Pozor:</strong> Pokud maj\u00ED nap\u0159. 2 karty stejnou barvu a 3. karta jinou, trojice neplat\u00ED!</p>' +
+              '<p style="font-size: 12.5px; color: #92400e;">\uD83D\uDC51 <strong>Odm\u011Bny:</strong> Poda\u0159\u00ED-li se ti vy\u010Distit cel\u00FD st\u016Fl do posledn\u00ED karty (27/27), postupn\u011B v Nastaven\u00ED (\u2699) odemkne\u0161 3 bonusov\u00E9 tvary (K\u0159\u00ED\u017E X, Prstenec, Korunu) a Kr\u00E1lovskou zlatou edici.</p>'
+            );
+          }
+        },
+        en: {
+          pageTitle: 'Diffequa \u2013 Logic Game',
+          found: 'Found',
+          deck: 'Deck',
+          settingsTooltip: 'Settings',
+          defaultStatus: 'Find 3 cards: each feature all the same, or all different',
+          btnUndo: '\u21A9 Undo',
+          btnUndoTitle: 'Undo last move',
+          btnHelp: 'Rules',
+          btnHint: 'Hint',
+          btnNew: 'New Game',
+          settingsTitle: 'Game Settings',
+          trophiesLabel: '\uD83D\uDC51 Cleared Boards (27/27):',
+          langTitle: 'Jazyk / Language',
+          shapesTitle: 'Choose 3 Shapes',
+          selectedCounter: 'Selected: {n}/3',
+          winSuffix: ' win(s)',
+          unlockHintDefault: '\uD83D\uDD12 <strong>How to unlock rewards:</strong> Clear the entire board down to 0 cards (27/27 triples). Your 1st, 2nd, and 3rd cleared board unlock <strong>Cross X</strong>, <strong>Ring</strong>, and finally the <strong>Crown + Royal Gold Edition</strong>.',
+          unlockHintLockedShape: '\uD83D\uDD12 <strong>{name}</strong> unlocks after reaching <strong>{level} cleared board(s) (27/27)</strong>{extra}!',
+          unlockHintCrownExtra: ' (together with the Royal Gold Edition)',
+          colorsTitle: 'Choose 3 Colors',
+          royalInfo: '\uD83D\uDC51 <strong>Royal Edition active:</strong> Yellow Gold, Rose Gold, and Platinum with metallic sheen on velvet dark cards.',
+          col0: '1st symbol color',
+          col1: '2nd symbol color',
+          col2: '3rd symbol color',
+          preset0: 'Standard',
+          preset1: 'Primary',
+          preset2: 'Contrast',
+          presetGold: '\uD83D\uDC51 Gold Edition',
+          btnSaveClose: 'Save & Close',
+          warnBoth: 'Warning: Selected colors are very similar and one is too light on a white card.',
+          warnClose: 'Warning: Selected colors are very similar and may be hard to tell apart.',
+          warnLight: 'Warning: One of the colors is very light and may be hard to see on the card.',
+          helpTitle: 'How to Play Diffequa',
+          helpClose: 'Got it, play',
+          helpOr: 'or',
+          endPerfectBadge: '\uD83D\uDC51 PERFECT GAME \u2013 CLEAN BOARD',
+          endPerfectTitle: 'Masterful Performance!',
+          endPerfectSub: 'You collected all 81 cards down to the very last one (0 remaining).',
+          endNormalTitle: 'Round Over',
+          endNormalSub: '{n} cards remain on the table with no valid triples left.',
+          endScoreLine: 'Found: {score} / 27 triples',
+          reward1: '\uD83C\uDF89 1st Reward unlocked in Settings (\u2699):<br>New bonus shape <strong>Cross X</strong>!',
+          reward2: '\uD83C\uDF89 2nd Reward unlocked in Settings (\u2699):<br>New bonus shape <strong>Ring</strong>!',
+          reward3: '\uD83C\uDF89 Top Reward unlocked in Settings (\u2699):<br><strong>Crown Shape</strong> & <strong>Royal Gold Edition</strong>!',
+          rewardMore: '\uD83D\uDC51 Total cleared boards: <strong>{n}</strong>',
+          btnEndUndo: '\u21A9 Undo last move & try another way',
+          btnPlayAgain: 'Play Again',
+          msgSetOk: 'Great! Valid Diffequa triple.',
+          msgSetErr: 'Not a valid triple \u2013 try another combination.',
+          msgReshuffle: 'No valid triple on the board \u2013 cards reshuffled!',
+          msgUndo: 'Last move undone.',
+          msgHint: 'Hint ({cur}/{tot}) \u2013 find the 3rd card!',
+          msgResume: 'Resuming your saved game.',
+          shapes: {
+            square: 'Square',
+            circle: 'Circle',
+            triangle: 'Triangle',
+            diamond: 'Diamond',
+            hexagon: 'Hexagon',
+            star: 'Star',
+            heart: 'Heart',
+            cross: 'Cross',
+            drop: 'Drop',
+            xcross: 'Cross X',
+            donut: 'Ring',
+            crown: 'Crown'
+          },
+          buildHelpHtml: function(shapesListStr) {
+            return (
+              '<p>The goal is to find a <strong>triple of cards</strong> that forms a valid match.</p>' +
+              '<p>Every card has <strong>4 features</strong>:</p>' +
+              '<div class="help-box"><ul>' +
+                '<li><strong>Shape:</strong> ' + shapesListStr + ' (customizable in \u2699)</li>' +
+                '<li><strong>Count:</strong> 1, 2, or 3 symbols</li>' +
+                '<li><strong>Fill:</strong> empty, striped, or solid</li>' +
+                '<li><strong>Color:</strong> three distinct colors (customizable in \u2699)</li>' +
+              '</ul></div>' +
+              '<p><strong>The Golden Rule:</strong> For a chosen triple, each of the 4 features must be either <strong>all the same</strong> (<em>equal</em>) across all three cards, or <strong>all different</strong> (<em>different</em>) on each card.</p>' +
+              '<div class="help-box" style="background: #f0fdf4; border-color: #bbf7d0;">' +
+                '<strong>Example of a valid triple:</strong><br>' +
+                'All 3 cards have the <strong>same shape</strong> and <strong>same color</strong>, but <strong>different counts</strong> (1, 2, and 3) and <strong>different fills</strong> (empty, striped, solid).' +
+              '</div>' +
+              '<p style="color: #b91c1c;"><strong>Watch out:</strong> If 2 cards share the same color and the 3rd card has a different color, it is NOT valid!</p>' +
+              '<p style="font-size: 12.5px; color: #92400e;">\uD83D\uDC51 <strong>Rewards:</strong> Clear the entire board down to the last card (27/27) to progressively unlock 3 bonus shapes (Cross X, Ring, Crown) and the Royal Gold Edition in Settings (\u2699).</p>'
+            );
+          }
+        }
+      };
+
+      function t(key) {
+        var pack = I18N[currentLang] || I18N.en;
+        return pack[key] !== undefined ? pack[key] : key;
+      }
+
+      function getShapeName(id) {
+        var pack = I18N[currentLang] || I18N.en;
+        return (pack.shapes && pack.shapes[id]) ? pack.shapes[id] : id;
+      }
+
+      var ALL_SHAPES = [
+        {
+          id: 'square',
+          unlockLevel: 0,
+          gen: function(stroke, fill) {
+            return '<rect x="6" y="6" width="38" height="38" rx="3" stroke="' + stroke + '" stroke-width="4.5" fill="' + fill + '" />';
+          }
+        },
+        {
+          id: 'circle',
+          unlockLevel: 0,
+          gen: function(stroke, fill) {
+            return '<circle cx="25" cy="25" r="19" stroke="' + stroke + '" stroke-width="4.5" fill="' + fill + '" />';
+          }
+        },
+        {
+          id: 'triangle',
+          unlockLevel: 0,
+          gen: function(stroke, fill) {
+            return '<polygon points="25,6 45,42 5,42" stroke-linejoin="round" stroke-width="4.5" stroke="' + stroke + '" fill="' + fill + '" />';
+          }
+        },
+        {
+          id: 'diamond',
+          unlockLevel: 0,
+          gen: function(stroke, fill) {
+            return '<polygon points="25,4 45,25 25,46 5,25" stroke-linejoin="round" stroke-width="4.5" stroke="' + stroke + '" fill="' + fill + '" />';
+          }
+        },
+        {
+          id: 'hexagon',
+          unlockLevel: 0,
+          gen: function(stroke, fill) {
+            return '<polygon points="25,5 43,15 43,35 25,45 7,35 7,15" stroke-linejoin="round" stroke-width="4.5" stroke="' + stroke + '" fill="' + fill + '" />';
+          }
+        },
+        {
+          id: 'star',
+          unlockLevel: 0,
+          gen: function(stroke, fill) {
+            return '<polygon points="25,4 31,17 45,19 35,29 37,44 25,37 13,44 15,29 5,19 19,17" stroke-linejoin="round" stroke-width="4" stroke="' + stroke + '" fill="' + fill + '" />';
+          }
+        },
+        {
+          id: 'heart',
+          unlockLevel: 0,
+          gen: function(stroke, fill) {
+            return '<path d="M25,43 C25,43 6,30 6,17 C6,10 11,6 17,6 C21,6 24,8 25,11 C26,8 29,6 33,6 C39,6 44,10 44,17 C44,30 25,43 25,43 Z" stroke-linejoin="round" stroke-width="4.2" stroke="' + stroke + '" fill="' + fill + '" />';
+          }
+        },
+        {
+          id: 'cross',
+          unlockLevel: 0,
+          gen: function(stroke, fill) {
+            return '<polygon points="18,6 32,6 32,18 44,18 44,32 32,32 32,44 18,44 18,32 6,32 6,18 18,18" stroke-linejoin="round" stroke-width="4" stroke="' + stroke + '" fill="' + fill + '" />';
+          }
+        },
+        {
+          id: 'drop',
+          unlockLevel: 0,
+          gen: function(stroke, fill) {
+            return '<path d="M25,5 C25,5 41,23 41,32 C41,40.8 33.8,46 25,46 C16.2,46 9,40.8 9,32 C9,23 25,5 25,5 Z" stroke-linejoin="round" stroke-width="4.5" stroke="' + stroke + '" fill="' + fill + '" />';
+          }
+        },
+        {
+          id: 'xcross',
+          unlockLevel: 1,
+          gen: function(stroke, fill) {
+            return '<polygon points="14,7 25,18 36,7 43,14 32,25 43,36 36,43 25,32 14,43 7,36 18,25 7,14" stroke-linejoin="round" stroke-width="4" stroke="' + stroke + '" fill="' + fill + '" />';
+          }
+        },
+        {
+          id: 'donut',
+          unlockLevel: 2,
+          gen: function(stroke, fill) {
+            return '<path d="M25,6 A19,19 0 1,0 25,44 A19,19 0 1,0 25,6 Z M25,17.5 A7.5,7.5 0 1,1 25,32.5 A7.5,7.5 0 1,1 25,17.5 Z" fill-rule="evenodd" stroke="' + stroke + '" stroke-width="3.8" fill="' + fill + '" />';
+          }
+        },
+        {
+          id: 'crown',
+          unlockLevel: 3,
+          gen: function(stroke, fill) {
+            return '<polygon points="6,40 8,15 19,26 25,11 31,26 42,15 44,40" stroke-linejoin="round" stroke-width="4" stroke="' + stroke + '" fill="' + fill + '" />';
+          }
+        }
+      ];
+
+      var userColors = [DEFAULT_COLORS[0], DEFAULT_COLORS[1], DEFAULT_COLORS[2]];
+      var selectedShapes = [DEFAULT_SHAPES[0], DEFAULT_SHAPES[1], DEFAULT_SHAPES[2]];
+      var perfectGamesCount = 0;
+      var royalMode = false;
+
+      function getShapeDefById(id) {
+        for (var i = 0; i < ALL_SHAPES.length; i++) {
+          if (ALL_SHAPES[i].id === id) return ALL_SHAPES[i];
+        }
+        return ALL_SHAPES[0];
+      }
+
+      function loadPrefs() {
+        try {
+          if (window.localStorage) {
+            var saved = window.localStorage.getItem(STORAGE_PREFS);
+            if (saved) {
+              var parsed = JSON.parse(saved);
+              if (parsed && (parsed.lang === 'cs' || parsed.lang === 'en')) {
+                currentLang = parsed.lang;
+              }
+              if (parsed && parsed.colors && parsed.colors.length === 3) {
+                userColors = [parsed.colors[0], parsed.colors[1], parsed.colors[2]];
+              }
+              if (parsed && parsed.shapes && parsed.shapes.length === 3) {
+                selectedShapes = [parsed.shapes[0], parsed.shapes[1], parsed.shapes[2]];
+              }
+              if (parsed && typeof parsed.perfectGames === 'number') {
+                perfectGamesCount = parsed.perfectGames;
+              }
+              if (parsed && typeof parsed.royalMode === 'boolean' && perfectGamesCount >= 3) {
+                royalMode = parsed.royalMode;
+              }
+            }
+          }
+        } catch (e) {}
+      }
+
+      function savePrefs() {
+        try {
+          if (window.localStorage) {
+            window.localStorage.setItem(STORAGE_PREFS, JSON.stringify({
+              lang: currentLang,
+              colors: userColors,
+              shapes: selectedShapes,
+              perfectGames: perfectGamesCount,
+              royalMode: royalMode
+            }));
+          }
+        } catch (e) {}
+      }
+
+      function applyLanguageToUI() {
+        document.documentElement.lang = currentLang;
+        document.title = t('pageTitle');
+
+        document.getElementById('lbl-found').textContent = t('found');
+        document.getElementById('lbl-deck').textContent = t('deck');
+        document.getElementById('btn-settings').title = t('settingsTooltip');
+
+        document.getElementById('btn-undo').innerHTML = t('btnUndo');
+        document.getElementById('btn-undo').title = t('btnUndoTitle');
+        document.getElementById('btn-help').textContent = t('btnHelp');
+        document.getElementById('btn-hint').textContent = t('btnHint');
+        document.getElementById('btn-new').textContent = t('btnNew');
+
+        document.getElementById('settings-title').textContent = t('settingsTitle');
+        document.getElementById('lbl-trophies').innerHTML = t('trophiesLabel');
+        document.getElementById('lbl-lang-title').textContent = t('langTitle');
+        document.getElementById('lbl-shapes-title').textContent = t('shapesTitle');
+        document.getElementById('lbl-colors-title').textContent = t('colorsTitle');
+        document.getElementById('royal-active-info').innerHTML = t('royalInfo');
+
+        document.getElementById('lbl-col-0').textContent = t('col0');
+        document.getElementById('lbl-col-1').textContent = t('col1');
+        document.getElementById('lbl-col-2').textContent = t('col2');
+
+        document.getElementById('preset-0').textContent = t('preset0');
+        document.getElementById('preset-1').textContent = t('preset1');
+        document.getElementById('preset-2').textContent = t('preset2');
+        document.getElementById('preset-gold').innerHTML = t('presetGold');
+        document.getElementById('btn-close-settings').textContent = t('btnSaveClose');
+
+        document.getElementById('help-title').textContent = t('helpTitle');
+        document.getElementById('btn-close-help').textContent = t('helpClose');
+        document.getElementById('btn-end-undo').innerHTML = t('btnEndUndo');
+        document.getElementById('btn-play-again').textContent = t('btnPlayAgain');
+
+        var csBtn = document.getElementById('lang-cs');
+        var enBtn = document.getElementById('lang-en');
+        if (csBtn) csBtn.className = 'lang-btn' + (currentLang === 'cs' ? ' active' : '');
+        if (enBtn) enBtn.className = 'lang-btn' + (currentLang === 'en' ? ' active' : '');
+
+        var statusEl = document.getElementById('status');
+        if (statusEl && statusEl.className === 'status-bar') {
+          statusEl.textContent = t('defaultStatus');
+        }
+
+        updateHelpContent();
+        updateUnlockUI();
+        checkColorContrast();
+        renderShapesPicker();
+      }
+
+      function getStrokePaint(colorIndex) {
+        if (royalMode) return 'url(#metal-' + colorIndex + ')';
+        return userColors[colorIndex];
+      }
+
+      function getFillPaint(colorIndex, fillType) {
+        if (fillType === 0) return 'none';
+        if (fillType === 1) return 'url(#hatch-' + colorIndex + ')';
+        if (royalMode) return 'url(#metal-' + colorIndex + ')';
+        return userColors[colorIndex];
+      }
+
+      function buildImpossibleLogoSVG() {
+        var s0 = getShapeDefById(selectedShapes[0] || DEFAULT_SHAPES[0]);
+        var s1 = getShapeDefById(selectedShapes[1] || DEFAULT_SHAPES[1]);
+        var s2 = getShapeDefById(selectedShapes[2] || DEFAULT_SHAPES[2]);
+
+        return (
+          '<svg viewBox="0 0 100 100" style="width: 100%; height: 100%; display: block;">' +
+            '<g transform="translate(30, 4) scale(0.8)">' + s0.gen(getStrokePaint(0), 'none') + '</g>' +
+            '<g transform="translate(8, 46) scale(0.8)">' + s1.gen(getStrokePaint(1), getFillPaint(1, 2)) + '</g>' +
+            '<g transform="translate(52, 46) scale(0.8)">' + s2.gen(getStrokePaint(2), 'url(#hatch-2)') + '</g>' +
+          '</svg>'
+        );
+      }
+
+      function updateLogos() {
+        var html = buildImpossibleLogoSVG();
+        var headerLogo = document.getElementById('header-logo');
+        if (headerLogo) headerLogo.innerHTML = html;
+        var endLogo = document.getElementById('end-logo');
+        if (endLogo) endLogo.innerHTML = html;
+      }
+
+      function applyThemeMode() {
+        if (royalMode) {
+          document.body.classList.add('royal-mode');
+        } else {
+          document.body.classList.remove('royal-mode');
+        }
+        var royalInfo = document.getElementById('royal-active-info');
+        var customColorsBox = document.getElementById('custom-colors-box');
+        if (royalInfo) royalInfo.style.display = royalMode ? 'block' : 'none';
+        if (customColorsBox) customColorsBox.style.display = royalMode ? 'none' : 'block';
+      }
+
+      function updateUnlockUI() {
+        var countEl = document.getElementById('perfect-count-display');
+        if (countEl) countEl.textContent = perfectGamesCount;
+
+        var goldBtn = document.getElementById('preset-gold');
+        if (goldBtn) {
+          goldBtn.style.display = (perfectGamesCount >= 3) ? 'inline-block' : 'none';
+        }
+
+        var hintBox = document.getElementById('unlock-hint-box');
+        if (hintBox) {
+          if (perfectGamesCount >= 3) {
+            hintBox.style.display = 'none';
+          } else {
+            hintBox.style.display = 'block';
+            hintBox.style.background = '#f8fafc';
+            hintBox.style.borderColor = '#e2e8f0';
+            hintBox.style.color = '#64748b';
+            hintBox.innerHTML = t('unlockHintDefault');
+          }
+        }
+
+        applyThemeMode();
+      }
+
+      function updateHelpContent() {
+        var bodyEl = document.getElementById('help-body');
+        if (!bodyEl || selectedShapes.length < 3) return;
+        var n0 = getShapeName(selectedShapes[0]).toLowerCase();
+        var n1 = getShapeName(selectedShapes[1]).toLowerCase();
+        var n2 = getShapeName(selectedShapes[2]).toLowerCase();
+        var shapesListStr = n0 + ', ' + n1 + ' ' + t('helpOr') + ' ' + n2;
+        var pack = I18N[currentLang] || I18N.en;
+        bodyEl.innerHTML = pack.buildHelpHtml(shapesListStr);
+      }
+
+      function checkColorContrast() {
+        var warnEl = document.getElementById('color-warning');
+        if (!warnEl) return;
+        if (royalMode) {
+          warnEl.style.display = 'none';
+          return;
+        }
+
+        function hexToRgb(hex) {
+          var num = parseInt(hex.replace('#', ''), 16);
+          return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+        }
+
+        var rgb = [hexToRgb(userColors[0]), hexToRgb(userColors[1]), hexToRgb(userColors[2])];
+        var tooClose = false;
+        var tooLight = false;
+
+        for (var i = 0; i < 3; i++) {
+          var brightness = (rgb[i].r * 299 + rgb[i].g * 587 + rgb[i].b * 114) / 1000;
+          if (brightness > 225) tooLight = true;
+        }
+
+        var pairs = [[0, 1], [0, 2], [1, 2]];
+        for (var p = 0; p < pairs.length; p++) {
+          var a = rgb[pairs[p][0]];
+          var b = rgb[pairs[p][1]];
+          var dist = Math.sqrt(Math.pow(a.r - b.r, 2) + Math.pow(a.g - b.g, 2) + Math.pow(a.b - b.b, 2));
+          if (dist < 60) tooClose = true;
+        }
+
+        if (tooClose && tooLight) {
+          warnEl.textContent = t('warnBoth');
+          warnEl.style.display = 'block';
+        } else if (tooClose) {
+          warnEl.textContent = t('warnClose');
+          warnEl.style.display = 'block';
+        } else if (tooLight) {
+          warnEl.textContent = t('warnLight');
+          warnEl.style.display = 'block';
+        } else {
+          warnEl.style.display = 'none';
+        }
+      }
+
+      function rebuildSvgPatterns() {
+        var box = document.getElementById('svg-defs-box');
+        if (!box) return;
+
+        var h0 = royalMode ? ROYAL_COLORS[0] : userColors[0];
+        var h1 = royalMode ? ROYAL_COLORS[1] : userColors[1];
+        var h2 = royalMode ? ROYAL_COLORS[2] : userColors[2];
+
+        box.innerHTML =
+          '<svg width="0" height="0"><defs>' +
+            '<linearGradient id="metal-0" x1="0%" y1="0%" x2="100%" y2="100%">' +
+              '<stop offset="0%" stop-color="#fef08a" />' +
+              '<stop offset="45%" stop-color="#f59e0b" />' +
+              '<stop offset="100%" stop-color="#b45309" />' +
+            '</linearGradient>' +
+            '<linearGradient id="metal-1" x1="0%" y1="0%" x2="100%" y2="100%">' +
+              '<stop offset="0%" stop-color="#fbcfe8" />' +
+              '<stop offset="45%" stop-color="#f472b6" />' +
+              '<stop offset="100%" stop-color="#be185d" />' +
+            '</linearGradient>' +
+            '<linearGradient id="metal-2" x1="0%" y1="0%" x2="100%" y2="100%">' +
+              '<stop offset="0%" stop-color="#ffffff" />' +
+              '<stop offset="50%" stop-color="#cbd5e1" />' +
+              '<stop offset="100%" stop-color="#64748b" />' +
+            '</linearGradient>' +
+            '<pattern id="hatch-0" width="4" height="4" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="0" y2="4" stroke="' + h0 + '" stroke-width="2" /></pattern>' +
+            '<pattern id="hatch-1" width="4" height="4" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="0" y2="4" stroke="' + h1 + '" stroke-width="2" /></pattern>' +
+            '<pattern id="hatch-2" width="4" height="4" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="0" y2="4" stroke="' + h2 + '" stroke-width="2" /></pattern>' +
+          '</defs></svg>';
+
+        for (var i = 0; i < 3; i++) {
+          var p = document.getElementById('col-pick-' + i);
+          if (p) p.value = userColors[i];
+        }
+        checkColorContrast();
+        updateLogos();
+      }
+
+      function renderShapesPicker() {
+        var grid = document.getElementById('shapes-grid');
+        var counter = document.getElementById('shapes-counter');
+        var closeBtn = document.getElementById('btn-close-settings');
+        if (!grid) return;
+
+        grid.innerHTML = '';
+
+        for (var i = 0; i < ALL_SHAPES.length; i++) {
+          (function(sh) {
+            var isBonus = (sh.unlockLevel > 0);
+            var locked = (perfectGamesCount < sh.unlockLevel);
+            var isSelected = (!locked && selectedShapes.indexOf(sh.id) !== -1);
+            var item = document.createElement('div');
+            var sName = getShapeName(sh.id);
+
+            var cls = 'shape-opt';
+            if (locked) {
+              cls += ' locked';
+            } else {
+              if (isBonus) cls += ' bonus-unlocked';
+              if (isSelected) cls += ' active';
+            }
+            item.className = cls;
+
+            var strokeCol = isSelected ? (isBonus ? '#78350f' : '#1d4ed8') : (isBonus && !locked ? '#d97706' : '#64748b');
+            var fillCol = (isSelected && isBonus) ? 'rgba(255,255,255,0.35)' : 'none';
+            var labelText = locked
+              ? '&#128274; ' + sh.unlockLevel + t('winSuffix')
+              : (isBonus ? '&#128081; ' + sName : sName);
+            var checkBadge = isSelected ? '<span class="shape-check">&#10003;</span>' : '';
+
+            item.innerHTML =
+              checkBadge +
+              '<svg viewBox="0 0 50 50">' + sh.gen(strokeCol, fillCol) + '</svg>' +
+              '<span>' + labelText + '</span>';
+
+            if (locked) {
+              item.onclick = function() {
+                var hintBox = document.getElementById('unlock-hint-box');
+                if (hintBox && perfectGamesCount < 3) {
+                  hintBox.style.background = '#fef3c7';
+                  hintBox.style.borderColor = '#f59e0b';
+                  hintBox.style.color = '#92400e';
+                  var extraTxt = (sh.id === 'crown') ? t('unlockHintCrownExtra') : '';
+                  hintBox.innerHTML = t('unlockHintLockedShape')
+                    .replace('{name}', sName)
+                    .replace('{level}', sh.unlockLevel)
+                    .replace('{extra}', extraTxt);
+                }
+              };
+            } else {
+              item.onclick = function() {
+                var idx = selectedShapes.indexOf(sh.id);
+                if (idx !== -1) {
+                  selectedShapes.splice(idx, 1);
+                } else {
+                  if (selectedShapes.length >= 3) {
+                    selectedShapes.shift();
+                  }
+                  selectedShapes.push(sh.id);
+                }
+                renderShapesPicker();
+                if (selectedShapes.length === 3) {
+                  savePrefs();
+                  updateHelpContent();
+                  updateLogos();
+                  renderBoard();
+                }
+              };
+            }
+
+            grid.appendChild(item);
+          })(ALL_SHAPES[i]);
+        }
+
+        if (counter) {
+          counter.textContent = t('selectedCounter').replace('{n}', selectedShapes.length);
+          counter.style.color = (selectedShapes.length === 3) ? '#16a34a' : '#dc2626';
+        }
+        if (closeBtn) {
+          closeBtn.disabled = (selectedShapes.length !== 3);
+        }
+      }
+
+      loadPrefs();
+      applyLanguageToUI();
+      rebuildSvgPatterns();
+
+      var deck = [];
+      var board = [];
+      for (var b = 0; b < 16; b++) board.push(null);
+      var historyStack = [];
+      var selectedIndices = [];
+      var hintIndices = [];
+      var hintCursor = -1;
+      var score = 0;
+      var statusTimeout = null;
+
+      function cloneCardsArray(arr) {
+        var copy = [];
+        for (var i = 0; i < arr.length; i++) {
+          if (arr[i] === null) {
+            copy.push(null);
+          } else {
+            copy.push({
+              shape: arr[i].shape,
+              count: arr[i].count,
+              fill: arr[i].fill,
+              color: arr[i].color
+            });
+          }
+        }
+        return copy;
+      }
+
+      function saveGameState() {
+        try {
+          if (window.localStorage) {
+            window.localStorage.setItem(STORAGE_GAME, JSON.stringify({
+              deck: deck,
+              board: board,
+              score: score,
+              history: historyStack
+            }));
+          }
+        } catch (e) {}
+      }
+
+      function loadGameState() {
+        try {
+          if (window.localStorage) {
+            var raw = window.localStorage.getItem(STORAGE_GAME);
+            if (raw) {
+              var data = JSON.parse(raw);
+              if (data && Array.isArray(data.board) && data.board.length === 16 && Array.isArray(data.deck)) {
+                deck = data.deck;
+                board = data.board;
+                score = data.score || 0;
+                historyStack = Array.isArray(data.history) ? data.history : [];
+                return true;
+              }
+            }
+          }
+        } catch (e) {}
+        return false;
+      }
+
+      function pushHistorySnapshot() {
+        historyStack.push({
+          deck: cloneCardsArray(deck),
+          board: cloneCardsArray(board),
+          score: score
+        });
+        if (historyStack.length > 30) {
+          historyStack.shift();
+        }
+      }
+
+      function undoLastMove() {
+        if (historyStack.length === 0) return;
+        var prev = historyStack.pop();
+        deck = prev.deck;
+        board = prev.board;
+        score = prev.score;
+        selectedIndices = [];
+        hintIndices = [];
+        hintCursor = -1;
+        document.getElementById('end-overlay').style.display = 'none';
+        document.getElementById('confetti-layer').innerHTML = '';
+        setStatus(t('msgUndo'), 'info');
+        saveGameState();
+        renderBoard();
+      }
+
+      function launchSymbolConfetti() {
+        var layer = document.getElementById('confetti-layer');
+        if (!layer) return;
+        layer.innerHTML = '';
+        for (var i = 0; i < 36; i++) {
+          var shId = selectedShapes[i % 3] || DEFAULT_SHAPES[i % 3];
+          var shDef = getShapeDefById(shId);
+          var cIdx = (i + 1) % 3;
+          var stroke = getStrokePaint(cIdx);
+          var fill = getFillPaint(cIdx, i % 3);
+
+          var div = document.createElement('div');
+          div.className = 'confetti-sym';
+          div.style.left = Math.floor(Math.random() * 94) + '%';
+          div.style.animationDuration = (2.2 + Math.random() * 2.2) + 's';
+          div.style.animationDelay = (Math.random() * 0.8) + 's';
+          div.innerHTML = '<svg viewBox="0 0 50 50" style="width:100%;height:100%;">' + shDef.gen(stroke, fill) + '</svg>';
+          layer.appendChild(div);
+        }
+      }
+
+      function showEndModal(isPerfect, remainingCount) {
+        updateLogos();
+        var logoBox = document.getElementById('end-logo');
+        var badge = document.getElementById('end-perfect-badge');
+        var title = document.getElementById('end-title');
+        var subtitle = document.getElementById('end-subtitle');
+        var scoreLine = document.getElementById('end-score-line');
+        var rewardBox = document.getElementById('end-reward-box');
+        var endUndoBtn = document.getElementById('btn-end-undo');
+
+        scoreLine.textContent = t('endScoreLine').replace('{score}', score);
+
+        if (isPerfect) {
+          perfectGamesCount++;
+          savePrefs();
+          updateUnlockUI();
+
+          logoBox.className = 'end-logo-box perfect';
+          badge.innerHTML = t('endPerfectBadge');
+          badge.style.display = 'inline-block';
+          title.textContent = t('endPerfectTitle');
+          subtitle.textContent = t('endPerfectSub');
+
+          rewardBox.style.display = 'block';
+          if (perfectGamesCount === 1) {
+            rewardBox.innerHTML = t('reward1');
+          } else if (perfectGamesCount === 2) {
+            rewardBox.innerHTML = t('reward2');
+          } else if (perfectGamesCount === 3) {
+            rewardBox.innerHTML = t('reward3');
+          } else {
+            rewardBox.innerHTML = t('rewardMore').replace('{n}', perfectGamesCount);
+          }
+
+          if (endUndoBtn) endUndoBtn.style.display = 'none';
+          launchSymbolConfetti();
+        } else {
+          logoBox.className = 'end-logo-box';
+          badge.style.display = 'none';
+          title.textContent = t('endNormalTitle');
+          subtitle.textContent = t('endNormalSub').replace('{n}', remainingCount);
+          rewardBox.style.display = 'none';
+          if (endUndoBtn) {
+            endUndoBtn.style.display = (historyStack.length > 0) ? 'block' : 'none';
+          }
+        }
+
+        document.getElementById('end-overlay').style.display = 'flex';
+      }
+
+      function createFullDeck() {
+        var d = [];
+        for (var shape = 0; shape < 3; shape++) {
+          for (var count = 1; count <= 3; count++) {
+            for (var fill = 0; fill < 3; fill++) {
+              for (var color = 0; color < 3; color++) {
+                d.push({ shape: shape, count: count, fill: fill, color: color });
+              }
+            }
+          }
+        }
+        return shuffle(d);
+      }
+
+      function shuffle(array) {
+        for (var i = array.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = array[i];
+          array[i] = array[j];
+          array[j] = tmp;
+        }
+        return array;
+      }
+
+      function isSet(c1, c2, c3) {
+        if (!c1 || !c2 || !c3) return false;
+        return (
+          (c1.shape + c2.shape + c3.shape) % 3 === 0 &&
+          (c1.count + c2.count + c3.count) % 3 === 0 &&
+          (c1.fill + c2.fill + c3.fill) % 3 === 0 &&
+          (c1.color + c2.color + c3.color) % 3 === 0
+        );
+      }
+
+      function findAllSetsOnBoard() {
+        var sets = [];
+        for (var i = 0; i < 16; i++) {
+          if (!board[i]) continue;
+          for (var j = i + 1; j < 16; j++) {
+            if (!board[j]) continue;
+            for (var k = j + 1; k < 16; k++) {
+              if (!board[k]) continue;
+              if (isSet(board[i], board[j], board[k])) {
+                sets.push([i, j, k]);
+              }
+            }
+          }
+        }
+        return sets;
+      }
+
+      function setStatus(text, type) {
+        var el = document.getElementById('status');
+        if (!el) return;
+        el.textContent = text;
+        el.className = 'status-bar' + (type ? ' status-' + type : '');
+        if (statusTimeout) clearTimeout(statusTimeout);
+        if (type) {
+          statusTimeout = setTimeout(function() {
+            el.textContent = t('defaultStatus');
+            el.className = 'status-bar';
+          }, 2600);
+        }
+      }
+
+      function ensureValidBoard() {
+        for (var i = 0; i < 16; i++) {
+          if (board[i] === null && deck.length > 0) {
+            board[i] = deck.pop();
+          }
+        }
+
+        var remainingOnBoard = 0;
+        for (var r0 = 0; r0 < 16; r0++) {
+          if (board[r0] !== null) remainingOnBoard++;
+        }
+
+        if (deck.length === 0 && remainingOnBoard === 0) {
+          showEndModal(true, 0);
+          return;
+        }
+
+        var attempts = 0;
+        while (findAllSetsOnBoard().length === 0) {
+          var activeCards = [];
+          for (var a = 0; a < 16; a++) {
+            if (board[a] !== null) activeCards.push(board[a]);
+          }
+          if (deck.length === 0 || attempts > 30) {
+            showEndModal(false, activeCards.length);
+            return;
+          }
+          for (var c = 0; c < activeCards.length; c++) deck.push(activeCards[c]);
+          shuffle(deck);
+          for (var r = 0; r < 16; r++) board[r] = null;
+          for (var n = 0; n < 16 && deck.length > 0; n++) {
+            board[n] = deck.pop();
+          }
+          attempts++;
+          setStatus(t('msgReshuffle'), 'info');
+        }
+      }
+
+      function renderSingleSVG(card) {
+        var strokePaint = getStrokePaint(card.color);
+        var fillPaint = getFillPaint(card.color, card.fill);
+
+        var shapeId = selectedShapes[card.shape] || DEFAULT_SHAPES[card.shape];
+        var shapeDef = getShapeDefById(shapeId);
+        var shapeEl = shapeDef.gen(strokePaint, fillPaint);
+
+        return '<svg class="sym" viewBox="0 0 50 50">' + shapeEl + '</svg>';
+      }
+
+      function renderCardContent(card) {
+        var s = renderSingleSVG(card);
+        if (card.count === 1) {
+          return '<div class="symbols-row">' + s + '</div>';
+        } else if (card.count === 2) {
+          return '<div class="symbols-row">' + s + '</div><div class="symbols-row">' + s + '</div>';
+        } else {
+          return '<div class="symbols-row">' + s + '</div><div class="symbols-row">' + s + s + '</div>';
+        }
+      }
+
+      function syncCardHeights() {
+        var boardEl = document.getElementById('board');
+        if (!boardEl) return;
+        var cards = boardEl.getElementsByClassName('card');
+        if (cards.length > 0) {
+          var w = cards[0].getBoundingClientRect().width;
+          if (w > 0) {
+            for (var i = 0; i < cards.length; i++) {
+              cards[i].style.height = w + 'px';
+            }
+          }
+        }
+      }
+
+      function renderBoard() {
+        var boardEl = document.getElementById('board');
+        if (!boardEl) return;
+        boardEl.innerHTML = '';
+
+        for (var i = 0; i < 16; i++) {
+          (function(idx) {
+            var card = board[idx];
+            var div = document.createElement('div');
+
+            if (!card) {
+              div.className = 'card empty';
+            } else {
+              var cls = 'card';
+              if (hintIndices.indexOf(idx) !== -1) {
+                cls += ' hint';
+              } else if (selectedIndices.indexOf(idx) !== -1) {
+                cls += ' selected';
+              }
+              div.className = cls;
+
+              var wrap = document.createElement('div');
+              wrap.className = 'symbols-wrap';
+              wrap.innerHTML = renderCardContent(card);
+              div.appendChild(wrap);
+
+              div.onclick = function() { onCardClick(idx); };
+            }
+
+            boardEl.appendChild(div);
+          })(i);
+        }
+
+        syncCardHeights();
+        document.getElementById('score').textContent = score;
+        document.getElementById('deck-count').textContent = deck.length;
+
+        var undoBtn = document.getElementById('btn-undo');
+        if (undoBtn) {
+          undoBtn.disabled = (historyStack.length === 0);
+        }
+      }
+
+      function onCardClick(index) {
+        var pos = selectedIndices.indexOf(index);
+        if (pos !== -1) {
+          selectedIndices.splice(pos, 1);
+          hintIndices = hintIndices.filter(function(h) { return h !== index; });
+          renderBoard();
+          return;
+        }
+
+        selectedIndices.push(index);
+
+        if (selectedIndices.length === 3) {
+          var i1 = selectedIndices[0];
+          var i2 = selectedIndices[1];
+          var i3 = selectedIndices[2];
+          if (isSet(board[i1], board[i2], board[i3])) {
+            pushHistorySnapshot();
+            score++;
+            setStatus(t('msgSetOk'), 'ok');
+            board[i1] = null;
+            board[i2] = null;
+            board[i3] = null;
+            selectedIndices = [];
+            hintIndices = [];
+            hintCursor = -1;
+            ensureValidBoard();
+            saveGameState();
+          } else {
+            setStatus(t('msgSetErr'), 'err');
+            selectedIndices = [];
+            hintIndices = [];
+          }
+        }
+
+        renderBoard();
+      }
+
+      function startNewGame() {
+        deck = createFullDeck();
+        for (var i = 0; i < 16; i++) board[i] = null;
+        historyStack = [];
+        selectedIndices = [];
+        hintIndices = [];
+        hintCursor = -1;
+        score = 0;
+        document.getElementById('end-overlay').style.display = 'none';
+        document.getElementById('confetti-layer').innerHTML = '';
+        setStatus(t('defaultStatus'));
+        ensureValidBoard();
+        saveGameState();
+        renderBoard();
+      }
+
+      // Přepínání jazyka
+      document.getElementById('lang-cs').onclick = function() {
+        currentLang = 'cs';
+        savePrefs();
+        applyLanguageToUI();
+      };
+
+      document.getElementById('lang-en').onclick = function() {
+        currentLang = 'en';
+        savePrefs();
+        applyLanguageToUI();
+      };
+
+      for (var cIdx = 0; cIdx < 3; cIdx++) {
+        (function(colorIdx) {
+          var picker = document.getElementById('col-pick-' + colorIdx);
+          if (picker) {
+            picker.oninput = function(e) {
+              royalMode = false;
+              userColors[colorIdx] = e.target.value;
+              applyThemeMode();
+              rebuildSvgPatterns();
+              savePrefs();
+              renderBoard();
+            };
+          }
+        })(cIdx);
+      }
+
+      var presets = [
+        ['#eb8672', '#8cc64d', '#e6c24f'],
+        ['#dc2626', '#16a34a', '#2563eb'],
+        ['#ea580c', '#7c3aed', '#0d9488']
+      ];
+
+      for (var pIdx = 0; pIdx < 3; pIdx++) {
+        (function(presetIdx) {
+          var btn = document.getElementById('preset-' + presetIdx);
+          if (btn) {
+            btn.onclick = function() {
+              royalMode = false;
+              userColors = [presets[presetIdx][0], presets[presetIdx][1], presets[presetIdx][2]];
+              applyThemeMode();
+              rebuildSvgPatterns();
+              savePrefs();
+              renderBoard();
+            };
+          }
+        })(pIdx);
+      }
+
+      var goldBtn = document.getElementById('preset-gold');
+      if (goldBtn) {
+        goldBtn.onclick = function() {
+          royalMode = true;
+          applyThemeMode();
+          rebuildSvgPatterns();
+          savePrefs();
+          renderBoard();
+        };
+      }
+
+      var secretTapCount = 0;
+      var secretTapTimer = null;
+      document.getElementById('settings-title').onclick = function() {
+        secretTapCount++;
+        clearTimeout(secretTapTimer);
+        secretTapTimer = setTimeout(function() { secretTapCount = 0; }, 1500);
+        if (secretTapCount >= 5) {
+          secretTapCount = 0;
+          document.getElementById('settings-overlay').style.display = 'none';
+          score = 27;
+          deck = [];
+          for (var i = 0; i < 16; i++) board[i] = null;
+          renderBoard();
+          showEndModal(true, 0);
+        }
+      };
+
+      var resetTapCount = 0;
+      var resetTapTimer = null;
+      document.getElementById('trophy-banner').onclick = function() {
+        resetTapCount++;
+        clearTimeout(resetTapTimer);
+        resetTapTimer = setTimeout(function() { resetTapCount = 0; }, 1500);
+        if (resetTapCount >= 5) {
+          resetTapCount = 0;
+          perfectGamesCount = 0;
+          royalMode = false;
+          selectedShapes = [DEFAULT_SHAPES[0], DEFAULT_SHAPES[1], DEFAULT_SHAPES[2]];
+          savePrefs();
+          updateUnlockUI();
+          rebuildSvgPatterns();
+          renderShapesPicker();
+          updateHelpContent();
+          updateLogos();
+          renderBoard();
+        }
+      };
+
+      document.getElementById('btn-settings').onclick = function() {
+        rebuildSvgPatterns();
+        updateUnlockUI();
+        renderShapesPicker();
+        document.getElementById('settings-overlay').style.display = 'flex';
+      };
+
+      document.getElementById('btn-close-settings').onclick = function() {
+        if (selectedShapes.length === 3) {
+          document.getElementById('settings-overlay').style.display = 'none';
+        }
+      };
+
+      document.getElementById('settings-overlay').onclick = function(e) {
+        if (e.target === this && selectedShapes.length === 3) {
+          this.style.display = 'none';
+        }
+      };
+
+      document.getElementById('btn-undo').onclick = undoLastMove;
+      document.getElementById('btn-end-undo').onclick = undoLastMove;
+
+      document.getElementById('btn-hint').onclick = function() {
+        var sets = findAllSetsOnBoard();
+        if (sets.length > 0) {
+          hintCursor = (hintCursor + 1) % sets.length;
+          var currentSet = sets[hintCursor];
+          hintIndices = [currentSet[0], currentSet[1]];
+          selectedIndices = [currentSet[0], currentSet[1]];
+          setStatus(
+            t('msgHint').replace('{cur}', hintCursor + 1).replace('{tot}', sets.length),
+            'info'
+          );
+          renderBoard();
+        }
+      };
+
+      document.getElementById('btn-help').onclick = function() {
+        updateHelpContent();
+        document.getElementById('help-overlay').style.display = 'flex';
+      };
+
+      document.getElementById('btn-close-help').onclick = function() {
+        document.getElementById('help-overlay').style.display = 'none';
+      };
+
+      document.getElementById('help-overlay').onclick = function(e) {
+        if (e.target === this) this.style.display = 'none';
+      };
+
+      document.getElementById('btn-new').onclick = startNewGame;
+      document.getElementById('btn-play-again').onclick = startNewGame;
+      window.onresize = syncCardHeights;
+
+      if (loadGameState()) {
+        setStatus(t('msgResume'), 'info');
+        ensureValidBoard();
+        renderBoard();
+      } else {
+        startNewGame();
+      }
+    };
+  </script>
+</body>
+</html>
