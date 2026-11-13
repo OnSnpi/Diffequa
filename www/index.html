@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta id="meta-theme-color" name="theme-color" content="#f0f2f5">
   <title>Diffequa &ndash; Logic Game</title>
+  <meta name="author" content="Ondrandy" />
   <link id="app-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ffffff'/%3E%3Crect x='36' y='12' width='28' height='28' rx='2' fill='none' stroke='%23eb8672' stroke-width='4.5'/%3E%3Ccircle cx='32' cy='68' r='15' fill='%238cc64d'/%3E%3Cpolygon points='68,52 84,82 52,82' fill='none' stroke='%23e6c24f' stroke-width='4.5' stroke-linejoin='round'/%3E%3C/svg%3E">
   <style>
     :root {
@@ -257,7 +258,6 @@
       overflow: visible;
     }
 
-    /* Spodní lišta přilepená dolů ke kraji obrazovky stejně jako v Hominu */
     .controls {
       width: 100%;
       max-width: 440px;
@@ -338,6 +338,14 @@
       overflow-y: auto;
       position: relative;
       z-index: 102;
+    }
+
+    .author-footer {
+      text-align: center;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 12px;
+      opacity: 0.8;
     }
 
     .modal h2 {
@@ -832,6 +840,7 @@
       </div>
 
       <button type="button" id="btn-close-settings" class="primary" style="width: 100%; margin-top: 6px;">Ulo&#382;it a zav&#345;&#237;t</button>
+      <div class="author-footer">&copy; 2026 Ondrandy</div>
     </div>
   </div>
 
@@ -841,6 +850,7 @@
       <h2 id="help-title">Jak hr&#225;t Diffequa</h2>
       <div id="help-body" class="help-body"></div>
       <button type="button" id="btn-close-help" class="primary" style="width: 100%; margin-top: 12px;">Rozum&#237;m, hr&#225;t</button>
+      <div class="author-footer">&copy; 2026 Ondrandy</div>
     </div>
   </div>
 
