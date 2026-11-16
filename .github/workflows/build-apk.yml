@@ -24,18 +24,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Create consistent signing key
+      - name: Restore persistent signing key
         run: |
           mkdir -p ~/.android
-          keytool -genkey -v \
-            -keystore ~/.android/debug.keystore \
-            -storepass android \
-            -alias androiddebugkey \
-            -keypass android \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -dname "CN=Diffequa,O=Diffequa,C=CZ"
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > ~/.android/debug.keystore
 
       - name: Initialize Capacitor and build Android project
         run: |
