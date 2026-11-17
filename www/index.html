@@ -727,6 +727,12 @@
       color: #fde68a;
     }
 
+    .confirm-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
     #confetti-layer {
       position: fixed;
       inset: 0;
@@ -781,6 +787,18 @@
     <button type="button" id="btn-help">N&#225;vod</button>
     <button type="button" id="btn-hint">N&#225;pov&#283;da</button>
     <button type="button" id="btn-new" class="primary">Nov&#225; hra</button>
+  </div>
+
+  <!-- Okno pro potvrzení nové hry při rozehrané partii -->
+  <div id="confirm-new-overlay" class="overlay">
+    <div class="modal">
+      <h2 id="confirm-new-title">Ukon&#269;it rozehranou hru?</h2>
+      <p id="confirm-new-text" style="font-size: 14px; color: var(--text-muted); margin: 8px 0; line-height: 1.45;"></p>
+      <div class="confirm-actions">
+        <button type="button" id="btn-confirm-cancel">Pokra&#269;ovat ve h&#345;e</button>
+        <button type="button" id="btn-confirm-yes" class="primary">Nov&#225; hra</button>
+      </div>
+    </div>
   </div>
 
   <!-- Okno s nastavením jazyka, barev, tvarů a statistikou -->
@@ -902,6 +920,10 @@
           btnHelp: 'N\u00E1vod',
           btnHint: 'N\u00E1pov\u011Bda',
           btnNew: 'Nov\u00E1 hra',
+          confirmNewTitle: 'Ukon\u010Dit rozehranou hru?',
+          confirmNewText: 'M\u00E1\u0161 rozehranou partii (nalezeno {score} / 27 trojic). Opravdu ji chce\u0161 ukon\u010Dit a za\u010D\u00EDt novou?',
+          btnConfirmCancel: 'Pokra\u010Dovat ve h\u0159e',
+          btnConfirmYes: 'Ano, nov\u00E1 hra',
           settingsTitle: 'Nastaven\u00ED hry',
           trophiesLabel: '\uD83D\uDC51 Vy\u010Di\u0161t\u011Bn\u00E9 stoly (27/27):',
           langTitle: 'Jazyk / Language',
@@ -990,6 +1012,10 @@
           btnHelp: 'Rules',
           btnHint: 'Hint',
           btnNew: 'New Game',
+          confirmNewTitle: 'End current game?',
+          confirmNewText: 'You have a game in progress ({score} / 27 triples found). Do you really want to end it and start a new one?',
+          btnConfirmCancel: 'Continue playing',
+          btnConfirmYes: 'Yes, new game',
           settingsTitle: 'Game Settings',
           trophiesLabel: '\uD83D\uDC51 Cleared Boards (27/27):',
           langTitle: 'Jazyk / Language',
@@ -1231,6 +1257,10 @@
         document.getElementById('btn-help').textContent = t('btnHelp');
         document.getElementById('btn-hint').textContent = t('btnHint');
         document.getElementById('btn-new').textContent = t('btnNew');
+
+        document.getElementById('confirm-new-title').textContent = t('confirmNewTitle');
+        document.getElementById('btn-confirm-cancel').textContent = t('btnConfirmCancel');
+        document.getElementById('btn-confirm-yes').textContent = t('btnConfirmYes');
 
         document.getElementById('settings-title').textContent = t('settingsTitle');
         document.getElementById('lbl-trophies').innerHTML = t('trophiesLabel');
@@ -1928,12 +1958,22 @@
         hintCursor = -1;
         score = 0;
         isGameOver = false;
+        document.getElementById('confirm-new-overlay').style.display = 'none';
         document.getElementById('end-overlay').style.display = 'none';
         document.getElementById('confetti-layer').innerHTML = '';
         setStatus(t('defaultStatus'));
         ensureValidBoard();
         saveGameState();
         renderBoard();
+      }
+
+      function requestNewGame() {
+        if (!isGameOver && score > 0) {
+          document.getElementById('confirm-new-text').textContent = t('confirmNewText').replace('{score}', score);
+          document.getElementById('confirm-new-overlay').style.display = 'flex';
+        } else {
+          startNewGame();
+        }
       }
 
       document.getElementById('lang-cs').onclick = function() {
@@ -2088,7 +2128,15 @@
         if (e.target === this) this.style.display = 'none';
       };
 
-      document.getElementById('btn-new').onclick = startNewGame;
+      document.getElementById('btn-new').onclick = requestNewGame;
+      document.getElementById('btn-confirm-yes').onclick = startNewGame;
+      document.getElementById('btn-confirm-cancel').onclick = function() {
+        document.getElementById('confirm-new-overlay').style.display = 'none';
+      };
+      document.getElementById('confirm-new-overlay').onclick = function(e) {
+        if (e.target === this) this.style.display = 'none';
+      };
+
       document.getElementById('btn-play-again').onclick = startNewGame;
       window.onresize = syncCardHeights;
 
