@@ -170,7 +170,13 @@
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
+    }
+
+    .board.grid-3x3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      max-width: 345px;
+      gap: 10px;
     }
 
     .card {
@@ -217,6 +223,18 @@
       box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.45);
     }
 
+    .card.flash-ok {
+      border-color: #16a34a;
+      background-color: #dcfce7;
+      box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.35);
+    }
+
+    body.royal-mode .card.flash-ok {
+      border-color: #fbbf24;
+      background: radial-gradient(circle at top, #451a03 0%, #162033 100%);
+      box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.55);
+    }
+
     .card.empty {
       background: transparent;
       border: 2px dashed #d1d5db;
@@ -256,6 +274,78 @@
       aspect-ratio: 1 / 1;
       display: block;
       overflow: visible;
+    }
+
+    .puzzle-found-panel {
+      width: 100%;
+      max-width: 440px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 10px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow);
+    }
+
+    .puzzle-found-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .puzzle-slots {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .puzzle-slot {
+      height: 36px;
+      border-radius: 8px;
+      border: 1.5px dashed var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 3px 5px;
+      background: rgba(0, 0, 0, 0.02);
+    }
+
+    body.royal-mode .puzzle-slot {
+      background: rgba(15, 23, 42, 0.55);
+    }
+
+    .puzzle-slot.filled {
+      border-style: solid;
+      border-color: #22c55e;
+      background: #f0fdf4;
+    }
+
+    body.royal-mode .puzzle-slot.filled {
+      border-color: rgba(251, 191, 36, 0.55);
+      background: rgba(245, 158, 11, 0.14);
+    }
+
+    .mini-card {
+      flex: 1;
+      height: 100%;
+      background: var(--card-board);
+      border: 1px solid var(--border-board);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      padding: 2px;
+    }
+
+    .mini-card svg {
+      height: 14px;
+      width: 14px;
+      display: block;
     }
 
     .controls {
@@ -449,33 +539,69 @@
       margin-bottom: 8px;
     }
 
-    .lang-btn {
-      font-size: 12.5px;
-      padding: 8px 6px;
+    .mode-switch {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .lang-btn, .mode-btn {
+      font-size: 12px;
+      padding: 8px 4px;
       background: #f8fafc;
       color: #475569;
       box-shadow: none;
       border: 2px solid #e2e8f0;
       border-radius: 10px;
+      line-height: 1.25;
     }
 
-    body.royal-mode .lang-btn {
+    .mode-btn small {
+      display: block;
+      font-size: 10px;
+      font-weight: 500;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    body.royal-mode .lang-btn,
+    body.royal-mode .mode-btn {
       background: #0f172a;
       color: var(--text-muted);
       border-color: var(--border);
     }
 
-    .lang-btn.active {
+    .lang-btn.active,
+    .mode-btn.active {
       border-color: #2563eb;
       background: #dbeafe;
       color: #1e40af;
       font-weight: 700;
     }
 
-    body.royal-mode .lang-btn.active {
+    body.royal-mode .lang-btn.active,
+    body.royal-mode .mode-btn.active {
       background: rgba(245, 158, 11, 0.14);
       border-color: #f59e0b;
       color: #fde68a;
+    }
+
+    .mode-desc-box {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 6px 8px;
+      margin-bottom: 8px;
+      text-align: left;
+      line-height: 1.35;
+    }
+
+    body.royal-mode .mode-desc-box {
+      background: #0f172a;
+      border-color: var(--border);
     }
 
     .presets {
@@ -773,7 +899,7 @@
       <span>Diffequa</span>
     </div>
     <div style="display: flex; align-items: center; gap: 8px;">
-      <span><span id="lbl-deck">Bal&#237;&#269;ek</span>: <span id="deck-count">65</span></span>
+      <span id="header-right-stat"><span id="lbl-deck">Bal&#237;&#269;ek</span>: <span id="deck-count">65</span></span>
       <button type="button" id="btn-settings" class="icon-btn" title="Nastaven&#237;">&#9881;</button>
     </div>
   </div>
@@ -781,6 +907,14 @@
   <div id="status" class="status-bar"></div>
 
   <div id="board" class="board"></div>
+
+  <div id="puzzle-found-panel" class="puzzle-found-panel" style="display: none;">
+    <div class="puzzle-found-title">
+      <span id="lbl-puzzle-found">Odhalen&#233; trojice</span>
+      <span id="puzzle-found-ratio">0 / 5</span>
+    </div>
+    <div id="puzzle-slots" class="puzzle-slots"></div>
+  </div>
 
   <div class="controls">
     <button type="button" id="btn-undo" disabled>&#8617; Zp&#283;t</button>
@@ -801,7 +935,7 @@
     </div>
   </div>
 
-  <!-- Okno s nastavením jazyka, barev, tvarů a statistikou -->
+  <!-- Okno s nastavením režimu, jazyka, barev, tvarů a statistikou -->
   <div id="settings-overlay" class="overlay">
     <div class="modal">
       <h2 id="settings-title" style="cursor: pointer;">Nastaven&#237; hry</h2>
@@ -810,6 +944,16 @@
         <span id="lbl-trophies">&#128081; Vy&#269;i&#353;t&#283;n&#233; stoly (27/27):</span>
         <strong id="perfect-count-display" style="color: #f59e0b; font-size: 15px;">0</strong>
       </div>
+
+      <div class="section-title">
+        <span id="lbl-mode-title">Hern&#237; re&#382;im</span>
+      </div>
+      <div class="mode-switch">
+        <button type="button" id="mode-classic" class="mode-btn active">Klasika<small>81 karet (4&times;4)</small></button>
+        <button type="button" id="mode-junior" class="mode-btn">Tr&#233;nink<small>27 karet (3&times;3)</small></button>
+        <button type="button" id="mode-puzzle" class="mode-btn">Puzzle<small>Najdi v&#353;echny</small></button>
+      </div>
+      <div id="mode-desc-box" class="mode-desc-box"></div>
 
       <div class="section-title">
         <span id="lbl-lang-title">Jazyk / Language</span>
@@ -889,12 +1033,60 @@
   </div>
 
   <script>
-    window.onload = function() {
-      var STORAGE_PREFS = 'diffequa_prefs_v9';
-      var STORAGE_GAME = 'diffequa_saved_game_v2';
+    window.onload = async function() {
+      var STORAGE_PREFS = 'diffequa_prefs_v10';
+      var STORAGE_GAME = 'diffequa_saved_game_v3';
       var DEFAULT_COLORS = ['#eb8672', '#8cc64d', '#e6c24f'];
       var ROYAL_COLORS = ['#f59e0b', '#f472b6', '#cbd5e1'];
       var DEFAULT_SHAPES = ['square', 'circle', 'triangle'];
+
+      // Dvojité úložiště: primárně nativní Android (@capacitor/preferences), záložně localStorage
+      function getNativePrefsPlugin() {
+        try {
+          if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
+            return window.Capacitor.Plugins.Preferences;
+          }
+        } catch (e) {}
+        return null;
+      }
+
+      async function storageWrite(key, valueStr) {
+        try {
+          if (window.localStorage) {
+            window.localStorage.setItem(key, valueStr);
+          }
+        } catch (e) {}
+
+        var nativePrefs = getNativePrefsPlugin();
+        if (nativePrefs) {
+          try {
+            await nativePrefs.set({ key: key, value: valueStr });
+          } catch (e) {}
+        }
+      }
+
+      async function storageRead(key) {
+        var nativePrefs = getNativePrefsPlugin();
+        if (nativePrefs) {
+          try {
+            var res = await nativePrefs.get({ key: key });
+            if (res && res.value !== null && res.value !== undefined) {
+              try {
+                if (window.localStorage) window.localStorage.setItem(key, res.value);
+              } catch (e) {}
+              return res.value;
+            }
+          } catch (e) {}
+        }
+
+        try {
+          if (window.localStorage) {
+            return window.localStorage.getItem(key);
+          }
+        } catch (e) {}
+
+        return null;
+      }
 
       function detectDeviceLanguage() {
         try {
@@ -907,31 +1099,46 @@
       }
 
       var currentLang = detectDeviceLanguage();
+      var gameMode = 'classic';
 
       var I18N = {
         cs: {
           pageTitle: 'Diffequa \u2013 Logick\u00E1 hra',
           found: 'Nalezeno',
           deck: 'Bal\u00ED\u010Dek',
+          puzzleTarget: 'C\u00EDl',
+          puzzleFoundTitle: 'Odhalen\u00E9 trojice v rozlo\u017Een\u00ED',
           settingsTooltip: 'Nastaven\u00ED',
-          defaultStatus: 'Najdi 3 karty: ka\u017Ed\u00E1 vlastnost v\u0161ude stejn\u00E1, nebo v\u0161ude jin\u00E1',
+          defaultStatusClassic: 'Najdi 3 karty: ka\u017Ed\u00E1 vlastnost v\u0161ude stejn\u00E1, nebo v\u0161ude jin\u00E1',
+          defaultStatusJunior: 'Tr\u00E9nink (3 vlastnosti): tvar, po\u010Det a barva stejn\u00E9 nebo jin\u00E9',
+          defaultStatusPuzzle: 'Najdi v\u0161ech {tot} skryt\u00FDch trojic v tomto rozlo\u017Een\u00ED karet!',
           btnUndo: '\u21A9 Zp\u011Bt',
           btnUndoTitle: 'Vr\u00E1tit posledn\u00ED tah',
           btnHelp: 'N\u00E1vod',
           btnHint: 'N\u00E1pov\u011Bda',
           btnNew: 'Nov\u00E1 hra',
           confirmNewTitle: 'Ukon\u010Dit rozehranou hru?',
-          confirmNewText: 'M\u00E1\u0161 rozehranou partii (nalezeno {score} / 27 trojic). Opravdu ji chce\u0161 ukon\u010Dit a za\u010D\u00EDt novou?',
+          confirmNewText: 'M\u00E1\u0161 rozehranou partii (nalezeno {score} / {max} trojic). Opravdu ji chce\u0161 ukon\u010Dit a za\u010D\u00EDt novou?',
           btnConfirmCancel: 'Pokra\u010Dovat ve h\u0159e',
           btnConfirmYes: 'Ano, nov\u00E1 hra',
           settingsTitle: 'Nastaven\u00ED hry',
           trophiesLabel: '\uD83D\uDC51 Vy\u010Di\u0161t\u011Bn\u00E9 stoly (27/27):',
+          modeTitle: 'Hern\u00ED re\u017Eim',
+          modeClassicName: 'Klasika',
+          modeClassicSub: '81 karet (4\u00D74)',
+          modeJuniorName: 'Tr\u00E9nink',
+          modeJuniorSub: '27 karet (3\u00D73)',
+          modePuzzleName: 'Puzzle',
+          modePuzzleSub: 'Najdi v\u0161echny',
+          modeDescClassic: '<strong>Pln\u00E1 hra (81 karet, 4 vlastnosti):</strong> Klasick\u00E1 m\u0159\u00ED\u017Eka 4\u00D74. Vy\u010Di\u0161t\u011Bn\u00ED cel\u00E9ho stolu (27/27) odemyk\u00E1 bonusov\u00E9 tvary a Zlatou edici.',
+          modeDescJunior: '<strong>Za\u010D\u00E1te\u010Dnick\u00FD bal\u00ED\u010Dek (27 karet, 3 vlastnosti):</strong> V\u00FDpl\u0148 je v\u017Edy pln\u00E1, sleduje\u0161 jen tvar, po\u010Det a barvu v m\u0159\u00ED\u017Ece 3\u00D73 (celkem 9 trojic).',
+          modeDescPuzzle: '<strong>Najdi v\u0161echny (12 karet):</strong> Karty ze stolu nemiz\u00ED. Tv\u00FDm \u00FAkolem je postupn\u011B odhalit v\u0161ech 4 a\u017E 6 skryt\u00FDch trojic v jednom rozlo\u017Een\u00ED.',
           langTitle: 'Jazyk / Language',
           shapesTitle: 'V\u00FDb\u011Br 3 tvar\u016F',
           selectedCounter: 'Vybr\u00E1no: {n}/3',
           winSuffix: '. v\u00FDhra',
-          unlockHintDefault: '\uD83D\uDD12 <strong>Jak odemknout bonusy:</strong> Vy\u010Disti cel\u00FD hern\u00ED st\u016Fl do posledn\u00ED karty (27/27 trojic). Za 1., 2. a 3. \u010Dist\u00FD st\u016Fl se postupn\u011B odemkne <strong>K\u0159\u00ED\u017E X</strong>, <strong>Prstenec</strong> a jako vrchol <strong>Koruna + Kr\u00E1lovsk\u00E1 zlat\u00E1 edice</strong>.',
-          unlockHintLockedShape: '\uD83D\uDD12 <strong>Tvar {name}</strong> se odemkne po dosa\u017Een\u00ED <strong>{level}. vy\u010Di\u0161t\u011Bn\u00E9ho stolu (27/27)</strong>{extra}!',
+          unlockHintDefault: '\uD83D\uDD12 <strong>Jak odemknout bonusy:</strong> V re\u017Eimu <strong>Klasika</strong> vy\u010Disti cel\u00FD hern\u00ED st\u016Fl (27/27 trojic). Za 1., 2. a 3. \u010Dist\u00FD st\u016Fl se postupn\u011B odemkne <strong>K\u0159\u00ED\u017E X</strong>, <strong>Prstenec</strong> a <strong>Koruna + Kr\u00E1lovsk\u00E1 zlat\u00E1 edice</strong>.',
+          unlockHintLockedShape: '\uD83D\uDD12 <strong>Tvar {name}</strong> se odemkne po dosa\u017Een\u00ED <strong>{level}. vy\u010Di\u0161t\u011Bn\u00E9ho stolu (27/27)</strong> v re\u017Eimu Klasika{extra}!',
           unlockHintCrownExtra: ' (spole\u010Dn\u011B se Zlatou edic\u00ED barev)',
           colorsTitle: 'V\u00FDb\u011Br 3 barev',
           royalInfo: '\uD83D\uDC51 <strong>Kr\u00E1lovsk\u00E1 edice aktivn\u00ED:</strong> \u017Dlut\u00E9 zlato, R\u016F\u017Eov\u00E9 zlato a Platina s kovov\u00FDm leskem na sametov\u011B tmav\u00FDch kart\u00E1ch.',
@@ -952,9 +1159,16 @@
           endPerfectBadge: '\uD83D\uDC51 DOKONAL\u00C1 HRA \u2013 \u010CIST\u00DD ST\u016EL',
           endPerfectTitle: 'Mistrovsk\u00FD v\u00FDkon!',
           endPerfectSub: 'Sebral jsi v\u0161ech 81 karet do posledn\u00EDho kusu (0 zb\u00FDvaj\u00EDc\u00EDch).',
+          endJuniorPerfectBadge: '\u2B50 TR\u00C9NINK DOKON\u010CEN \u2013 9/9',
+          endJuniorPerfectTitle: 'Skv\u011Bl\u00E1 pr\u00E1ce!',
+          endJuniorPerfectSub: 'Vy\u010Distil jsi cel\u00FD tr\u00E9ninkov\u00FD bal\u00ED\u010Dek 27 karet do posledn\u00EDho kusu.',
+          endJuniorNote: 'Tip: Chce\u0161-li odemykat bonusov\u00E9 tvary a Zlatou edici, p\u0159epni v Nastaven\u00ED (\u2699) na re\u017Eim <strong>Klasika (81 karet)</strong>.',
+          endPuzzleBadge: '\uD83E\uDDE9 PUZZLE VY\u0158E\u0160ENO',
+          endPuzzleTitle: 'V\u0161echny trojice odhaleny!',
+          endPuzzleSub: 'Na\u0161el jsi v\u0161ech {tot} skryt\u00FDch kombinac\u00ED v tomto rozlo\u017Een\u00ED.',
           endNormalTitle: 'Konec kola',
           endNormalSub: 'Na stole zbylo {n} karet, ze kter\u00FDch u\u017E nelze slo\u017Eit dal\u0161\u00ED trojici.',
-          endScoreLine: 'Nalezeno: {score} / 27 trojic',
+          endScoreLine: 'Nalezeno: {score} / {max} trojic',
           reward1: '\uD83C\uDF89 Odem\u010Dena 1. odm\u011Bna v Nastaven\u00ED (\u2699):<br>Nov\u00FD bonusov\u00FD tvar <strong>K\u0159\u00ED\u017E X</strong>!',
           reward2: '\uD83C\uDF89 Odem\u010Dena 2. odm\u011Bna v Nastaven\u00ED (\u2699):<br>Nov\u00FD bonusov\u00FD tvar <strong>Prstenec</strong>!',
           reward3: '\uD83C\uDF89 Odem\u010Dena nejvy\u0161\u0161\u00ED odm\u011Bna v Nastaven\u00ED (\u2699):<br><strong>Tvar Koruna</strong> a <strong>Kr\u00E1lovsk\u00E1 zlat\u00E1 edice</strong>!',
@@ -962,6 +1176,8 @@
           btnEndUndo: '\u21A9 Vr\u00E1tit posledn\u00ED tah a zkusit jinak',
           btnPlayAgain: 'Hr\u00E1t znovu',
           msgSetOk: 'V\u00FDb\u011Brn\u011B! Spr\u00E1vn\u00E1 trojice Diffequa.',
+          msgPuzzleFoundOk: 'Skv\u011Bl\u00E9! Odhalena {cur}. z {tot} trojic.',
+          msgPuzzleAlready: 'Tuto trojici u\u017E m\u00E1\u0161 odhalenou! Zkus naj\u00EDt jinou.',
           msgSetErr: 'Tato trojice nespl\u0148uje pravidlo \u2013 zkus jinou.',
           msgReshuffle: '\u017D\u00E1dn\u00E1 platn\u00E1 trojice na stole \u2013 karty byly prom\u00EDch\u00E1ny!',
           msgUndo: 'Posledn\u00ED tah byl vr\u00E1cen zp\u011Bt.',
@@ -993,11 +1209,12 @@
               '</ul></div>' +
               '<p><strong>Zlat\u00E9 pravidlo:</strong> U vybran\u00E9 trojice mus\u00ED b\u00FDt ka\u017Ed\u00E1 z t\u011Bchto 4 vlastnost\u00ED u v\u0161ech t\u0159\u00ED karet bu\u010F <strong>zcela stejn\u00E1</strong> (<em>equal</em>), nebo u ka\u017Ed\u00E9 karty <strong>jin\u00E1</strong> (<em>different</em>).</p>' +
               '<div class="help-box help-example-box">' +
-                '<strong>P\u0159\u00EDklad platn\u00E9 trojice:</strong><br>' +
-                'V\u0161echny 3 karty maj\u00ED <strong>stejn\u00FD tvar</strong>, <strong>stejnou barvu</strong>, ale <strong>r\u016Fzn\u00FD po\u010Det</strong> (1, 2 a 3) a <strong>r\u016Fznou v\u00FDpl\u0148</strong> (pr\u00E1zdn\u00E1, \u0161rafovan\u00E1, pln\u00E1).' +
+                '<strong>Hern\u00ED re\u017Eimy v Nastaven\u00ED (\u2699):</strong><br>' +
+                '&bull; <strong>Klasika (81 karet):</strong> Pln\u00E1 hra 4\u00D74 (odemyk\u00E1 odm\u011Bny).<br>' +
+                '&bull; <strong>Tr\u00E9nink (27 karet):</strong> M\u0159\u00ED\u017Eka 3\u00D73 jen se 3 vlastnostmi (bez v\u00FDpln\u011B).<br>' +
+                '&bull; <strong>Puzzle (Najdi v\u0161echny):</strong> Karty nemiz\u00ED, hled\u00E1\u0161 v\u0161ech 4\u20136 skryt\u00FDch trojic v jednom rozlo\u017Een\u00ED.' +
               '</div>' +
-              '<p style="color: #f87171;"><strong>Pozor:</strong> Pokud maj\u00ED nap\u0159. 2 karty stejnou barvu a 3. karta jinou, trojice neplat\u00ED!</p>' +
-              '<p style="font-size: 12.5px; opacity: 0.9;">\uD83D\uDC51 <strong>Odm\u011Bny:</strong> Poda\u0159\u00ED-li se ti vy\u010Distit cel\u00FD st\u016Fl do posledn\u00ED karty (27/27), postupn\u011B v Nastaven\u00ED (\u2699) odemkne\u0161 3 bonusov\u00E9 tvary (K\u0159\u00ED\u017E X, Prstenec, Korunu) a Kr\u00E1lovskou zlatou edici.</p>'
+              '<p style="color: #f87171;"><strong>Pozor:</strong> Pokud maj\u00ED nap\u0159. 2 karty stejnou barvu a 3. karta jinou, trojice neplat\u00ED!</p>'
             );
           }
         },
@@ -1005,25 +1222,39 @@
           pageTitle: 'Diffequa \u2013 Logic Game',
           found: 'Found',
           deck: 'Deck',
+          puzzleTarget: 'Goal',
+          puzzleFoundTitle: 'Discovered Triples on This Board',
           settingsTooltip: 'Settings',
-          defaultStatus: 'Find 3 cards: each feature all the same, or all different',
+          defaultStatusClassic: 'Find 3 cards: each feature all the same, or all different',
+          defaultStatusJunior: 'Training (3 features): shape, count & color all same or all different',
+          defaultStatusPuzzle: 'Find all {tot} hidden triples in this fixed card layout!',
           btnUndo: '\u21A9 Undo',
           btnUndoTitle: 'Undo last move',
           btnHelp: 'Rules',
           btnHint: 'Hint',
           btnNew: 'New Game',
           confirmNewTitle: 'End current game?',
-          confirmNewText: 'You have a game in progress ({score} / 27 triples found). Do you really want to end it and start a new one?',
+          confirmNewText: 'You have a game in progress ({score} / {max} triples found). Do you really want to end it and start a new one?',
           btnConfirmCancel: 'Continue playing',
           btnConfirmYes: 'Yes, new game',
           settingsTitle: 'Game Settings',
           trophiesLabel: '\uD83D\uDC51 Cleared Boards (27/27):',
+          modeTitle: 'Game Mode',
+          modeClassicName: 'Classic',
+          modeClassicSub: '81 cards (4\u00D74)',
+          modeJuniorName: 'Training',
+          modeJuniorSub: '27 cards (3\u00D73)',
+          modePuzzleName: 'Puzzle',
+          modePuzzleSub: 'Find All',
+          modeDescClassic: '<strong>Full Game (81 cards, 4 features):</strong> Classic 4\u00D74 grid. Clearing the entire board (27/27) unlocks bonus shapes and the Royal Gold Edition.',
+          modeDescJunior: '<strong>Starter Deck (27 cards, 3 features):</strong> Fill is always solid; focus only on shape, count, and color in a 3\u00D73 grid (9 triples total).',
+          modeDescPuzzle: '<strong>Find All (12 cards):</strong> Cards stay on the table. Your goal is to uncover all 4 to 6 hidden triples hidden in a single layout.',
           langTitle: 'Jazyk / Language',
           shapesTitle: 'Choose 3 Shapes',
           selectedCounter: 'Selected: {n}/3',
           winSuffix: ' win(s)',
-          unlockHintDefault: '\uD83D\uDD12 <strong>How to unlock rewards:</strong> Clear the entire board down to 0 cards (27/27 triples). Your 1st, 2nd, and 3rd cleared board unlock <strong>Cross X</strong>, <strong>Ring</strong>, and finally the <strong>Crown + Royal Gold Edition</strong>.',
-          unlockHintLockedShape: '\uD83D\uDD12 <strong>{name}</strong> unlocks after reaching <strong>{level} cleared board(s) (27/27)</strong>{extra}!',
+          unlockHintDefault: '\uD83D\uDD12 <strong>How to unlock rewards:</strong> Clear the entire board (27/27 triples) in <strong>Classic</strong> mode. Your 1st, 2nd, and 3rd cleared board unlock <strong>Cross X</strong>, <strong>Ring</strong>, and <strong>Crown + Royal Gold Edition</strong>.',
+          unlockHintLockedShape: '\uD83D\uDD12 <strong>{name}</strong> unlocks after reaching <strong>{level} cleared board(s) (27/27)</strong> in Classic mode{extra}!',
           unlockHintCrownExtra: ' (together with the Royal Gold Edition)',
           colorsTitle: 'Choose 3 Colors',
           royalInfo: '\uD83D\uDC51 <strong>Royal Edition active:</strong> Yellow Gold, Rose Gold, and Platinum with metallic sheen on velvet dark cards.',
@@ -1044,9 +1275,16 @@
           endPerfectBadge: '\uD83D\uDC51 PERFECT GAME \u2013 CLEAN BOARD',
           endPerfectTitle: 'Masterful Performance!',
           endPerfectSub: 'You collected all 81 cards down to the very last one (0 remaining).',
+          endJuniorPerfectBadge: '\u2B50 TRAINING COMPLETE \u2013 9/9',
+          endJuniorPerfectTitle: 'Great Job!',
+          endJuniorPerfectSub: 'You cleared the entire 27-card starter deck down to the last card.',
+          endJuniorNote: 'Tip: To unlock bonus shapes and the Royal Gold Edition, switch to <strong>Classic (81 cards)</strong> in Settings (\u2699).',
+          endPuzzleBadge: '\uD83E\uDDE9 PUZZLE SOLVED',
+          endPuzzleTitle: 'All Triples Discovered!',
+          endPuzzleSub: 'You found all {tot} hidden combinations in this layout.',
           endNormalTitle: 'Round Over',
           endNormalSub: '{n} cards remain on the table with no valid triples left.',
-          endScoreLine: 'Found: {score} / 27 triples',
+          endScoreLine: 'Found: {score} / {max} triples',
           reward1: '\uD83C\uDF89 1st Reward unlocked in Settings (\u2699):<br>New bonus shape <strong>Cross X</strong>!',
           reward2: '\uD83C\uDF89 2nd Reward unlocked in Settings (\u2699):<br>New bonus shape <strong>Ring</strong>!',
           reward3: '\uD83C\uDF89 Top Reward unlocked in Settings (\u2699):<br><strong>Crown Shape</strong> & <strong>Royal Gold Edition</strong>!',
@@ -1054,6 +1292,8 @@
           btnEndUndo: '\u21A9 Undo last move & try another way',
           btnPlayAgain: 'Play Again',
           msgSetOk: 'Great! Valid Diffequa triple.',
+          msgPuzzleFoundOk: 'Nice! Found triple {cur} of {tot}.',
+          msgPuzzleAlready: 'You already found this triple! Look for another one.',
           msgSetErr: 'Not a valid triple \u2013 try another combination.',
           msgReshuffle: 'No valid triple on the board \u2013 cards reshuffled!',
           msgUndo: 'Last move undone.',
@@ -1085,11 +1325,12 @@
               '</ul></div>' +
               '<p><strong>The Golden Rule:</strong> For a chosen triple, each of the 4 features must be either <strong>all the same</strong> (<em>equal</em>) across all three cards, or <strong>all different</strong> (<em>different</em>) on each card.</p>' +
               '<div class="help-box help-example-box">' +
-                '<strong>Example of a valid triple:</strong><br>' +
-                'All 3 cards have the <strong>same shape</strong> and <strong>same color</strong>, but <strong>different counts</strong> (1, 2, and 3) and <strong>different fills</strong> (empty, striped, solid).' +
+                '<strong>Game Modes in Settings (\u2699):</strong><br>' +
+                '&bull; <strong>Classic (81 cards):</strong> Full 4\u00D74 game (unlocks rewards).<br>' +
+                '&bull; <strong>Training (27 cards):</strong> 3\u00D73 grid with only 3 features (solid fill).<br>' +
+                '&bull; <strong>Puzzle (Find All):</strong> Cards stay put; uncover all 4\u20136 hidden triples in one layout.' +
               '</div>' +
-              '<p style="color: #f87171;"><strong>Watch out:</strong> If 2 cards share the same color and the 3rd card has a different color, it is NOT valid!</p>' +
-              '<p style="font-size: 12.5px; opacity: 0.9;">\uD83D\uDC51 <strong>Rewards:</strong> Clear the entire board down to the last card (27/27) to progressively unlock 3 bonus shapes (Cross X, Ring, Crown) and the Royal Gold Edition in Settings (\u2699).</p>'
+              '<p style="color: #f87171;"><strong>Watch out:</strong> If 2 cards share the same color and the 3rd card has a different color, it is NOT valid!</p>'
             );
           }
         }
@@ -1204,27 +1445,28 @@
         return ALL_SHAPES[0];
       }
 
-      function loadPrefs() {
+      async function loadPrefs() {
         try {
-          if (window.localStorage) {
-            var saved = window.localStorage.getItem(STORAGE_PREFS);
-            if (saved) {
-              var parsed = JSON.parse(saved);
-              if (parsed && (parsed.lang === 'cs' || parsed.lang === 'en')) {
-                currentLang = parsed.lang;
-              }
-              if (parsed && parsed.colors && parsed.colors.length === 3) {
-                userColors = [parsed.colors[0], parsed.colors[1], parsed.colors[2]];
-              }
-              if (parsed && parsed.shapes && parsed.shapes.length === 3) {
-                selectedShapes = [parsed.shapes[0], parsed.shapes[1], parsed.shapes[2]];
-              }
-              if (parsed && typeof parsed.perfectGames === 'number') {
-                perfectGamesCount = parsed.perfectGames;
-              }
-              if (parsed && typeof parsed.royalMode === 'boolean' && perfectGamesCount >= 3) {
-                royalMode = parsed.royalMode;
-              }
+          var saved = await storageRead(STORAGE_PREFS);
+          if (saved) {
+            var parsed = JSON.parse(saved);
+            if (parsed && (parsed.lang === 'cs' || parsed.lang === 'en')) {
+              currentLang = parsed.lang;
+            }
+            if (parsed && (parsed.mode === 'classic' || parsed.mode === 'junior' || parsed.mode === 'puzzle')) {
+              gameMode = parsed.mode;
+            }
+            if (parsed && parsed.colors && parsed.colors.length === 3) {
+              userColors = [parsed.colors[0], parsed.colors[1], parsed.colors[2]];
+            }
+            if (parsed && parsed.shapes && parsed.shapes.length === 3) {
+              selectedShapes = [parsed.shapes[0], parsed.shapes[1], parsed.shapes[2]];
+            }
+            if (parsed && typeof parsed.perfectGames === 'number') {
+              perfectGamesCount = parsed.perfectGames;
+            }
+            if (parsed && typeof parsed.royalMode === 'boolean' && perfectGamesCount >= 3) {
+              royalMode = parsed.royalMode;
             }
           }
         } catch (e) {}
@@ -1232,16 +1474,35 @@
 
       function savePrefs() {
         try {
-          if (window.localStorage) {
-            window.localStorage.setItem(STORAGE_PREFS, JSON.stringify({
-              lang: currentLang,
-              colors: userColors,
-              shapes: selectedShapes,
-              perfectGames: perfectGamesCount,
-              royalMode: royalMode
-            }));
-          }
+          storageWrite(STORAGE_PREFS, JSON.stringify({
+            lang: currentLang,
+            mode: gameMode,
+            colors: userColors,
+            shapes: selectedShapes,
+            perfectGames: perfectGamesCount,
+            royalMode: royalMode
+          }));
         } catch (e) {}
+      }
+
+      function getDefaultStatusText() {
+        if (gameMode === 'junior') return t('defaultStatusJunior');
+        if (gameMode === 'puzzle') return t('defaultStatusPuzzle').replace('{tot}', puzzleAllSets.length || 5);
+        return t('defaultStatusClassic');
+      }
+
+      function updateModeUI() {
+        var modes = ['classic', 'junior', 'puzzle'];
+        for (var i = 0; i < modes.length; i++) {
+          var btn = document.getElementById('mode-' + modes[i]);
+          if (btn) btn.className = 'mode-btn' + (gameMode === modes[i] ? ' active' : '');
+        }
+        var descBox = document.getElementById('mode-desc-box');
+        if (descBox) {
+          if (gameMode === 'junior') descBox.innerHTML = t('modeDescJunior');
+          else if (gameMode === 'puzzle') descBox.innerHTML = t('modeDescPuzzle');
+          else descBox.innerHTML = t('modeDescClassic');
+        }
       }
 
       function applyLanguageToUI() {
@@ -1249,7 +1510,6 @@
         document.title = t('pageTitle');
 
         document.getElementById('lbl-found').textContent = t('found');
-        document.getElementById('lbl-deck').textContent = t('deck');
         document.getElementById('btn-settings').title = t('settingsTooltip');
 
         document.getElementById('btn-undo').innerHTML = t('btnUndo');
@@ -1264,10 +1524,16 @@
 
         document.getElementById('settings-title').textContent = t('settingsTitle');
         document.getElementById('lbl-trophies').innerHTML = t('trophiesLabel');
+        document.getElementById('lbl-mode-title').textContent = t('modeTitle');
+        document.getElementById('mode-classic').innerHTML = t('modeClassicName') + '<small>' + t('modeClassicSub') + '</small>';
+        document.getElementById('mode-junior').innerHTML = t('modeJuniorName') + '<small>' + t('modeJuniorSub') + '</small>';
+        document.getElementById('mode-puzzle').innerHTML = t('modePuzzleName') + '<small>' + t('modePuzzleSub') + '</small>';
+
         document.getElementById('lbl-lang-title').textContent = t('langTitle');
         document.getElementById('lbl-shapes-title').textContent = t('shapesTitle');
         document.getElementById('lbl-colors-title').textContent = t('colorsTitle');
         document.getElementById('royal-active-info').innerHTML = t('royalInfo');
+        document.getElementById('lbl-puzzle-found').textContent = t('puzzleFoundTitle');
 
         document.getElementById('lbl-col-0').textContent = t('col0');
         document.getElementById('lbl-col-1').textContent = t('col1');
@@ -1289,11 +1555,7 @@
         if (csBtn) csBtn.className = 'lang-btn' + (currentLang === 'cs' ? ' active' : '');
         if (enBtn) enBtn.className = 'lang-btn' + (currentLang === 'en' ? ' active' : '');
 
-        var statusEl = document.getElementById('status');
-        if (statusEl && statusEl.className === 'status-bar') {
-          statusEl.textContent = t('defaultStatus');
-        }
-
+        updateModeUI();
         updateHelpContent();
         updateUnlockUI();
         checkColorContrast();
@@ -1561,20 +1823,32 @@
         }
       }
 
-      loadPrefs();
-      applyLanguageToUI();
-      rebuildSvgPatterns();
-
       var deck = [];
       var board = [];
-      for (var b = 0; b < 16; b++) board.push(null);
       var historyStack = [];
       var selectedIndices = [];
       var hintIndices = [];
+      var flashOkIndices = [];
       var hintCursor = -1;
       var score = 0;
       var isGameOver = false;
       var statusTimeout = null;
+      var flashTimeout = null;
+
+      var puzzleAllSets = [];
+      var puzzleFoundSets = [];
+
+      function getBoardSlotCount() {
+        if (gameMode === 'junior') return 9;
+        if (gameMode === 'puzzle') return 12;
+        return 16;
+      }
+
+      function getMaxPossibleScore() {
+        if (gameMode === 'junior') return 9;
+        if (gameMode === 'puzzle') return puzzleAllSets.length || 5;
+        return 27;
+      }
 
       function cloneCardsArray(arr) {
         var copy = [];
@@ -1593,34 +1867,43 @@
         return copy;
       }
 
+      function cloneSetsArray(arr) {
+        var copy = [];
+        for (var i = 0; i < arr.length; i++) {
+          copy.push([arr[i][0], arr[i][1], arr[i][2]]);
+        }
+        return copy;
+      }
+
       function saveGameState() {
         try {
-          if (window.localStorage) {
-            window.localStorage.setItem(STORAGE_GAME, JSON.stringify({
-              deck: deck,
-              board: board,
-              score: score,
-              history: historyStack,
-              isGameOver: isGameOver
-            }));
-          }
+          storageWrite(STORAGE_GAME, JSON.stringify({
+            mode: gameMode,
+            deck: deck,
+            board: board,
+            score: score,
+            history: historyStack,
+            isGameOver: isGameOver,
+            puzzleAllSets: puzzleAllSets,
+            puzzleFoundSets: puzzleFoundSets
+          }));
         } catch (e) {}
       }
 
-      function loadGameState() {
+      async function loadGameState() {
         try {
-          if (window.localStorage) {
-            var raw = window.localStorage.getItem(STORAGE_GAME);
-            if (raw) {
-              var data = JSON.parse(raw);
-              if (data && Array.isArray(data.board) && data.board.length === 16 && Array.isArray(data.deck)) {
-                deck = data.deck;
-                board = data.board;
-                score = data.score || 0;
-                historyStack = Array.isArray(data.history) ? data.history : [];
-                isGameOver = Boolean(data.isGameOver);
-                return true;
-              }
+          var raw = await storageRead(STORAGE_GAME);
+          if (raw) {
+            var data = JSON.parse(raw);
+            if (data && data.mode === gameMode && Array.isArray(data.board) && data.board.length === getBoardSlotCount()) {
+              deck = Array.isArray(data.deck) ? data.deck : [];
+              board = data.board;
+              score = data.score || 0;
+              historyStack = Array.isArray(data.history) ? data.history : [];
+              isGameOver = Boolean(data.isGameOver);
+              puzzleAllSets = Array.isArray(data.puzzleAllSets) ? data.puzzleAllSets : [];
+              puzzleFoundSets = Array.isArray(data.puzzleFoundSets) ? data.puzzleFoundSets : [];
+              return true;
             }
           }
         } catch (e) {}
@@ -1631,7 +1914,8 @@
         historyStack.push({
           deck: cloneCardsArray(deck),
           board: cloneCardsArray(board),
-          score: score
+          score: score,
+          puzzleFoundSets: cloneSetsArray(puzzleFoundSets)
         });
         if (historyStack.length > 30) {
           historyStack.shift();
@@ -1644,8 +1928,10 @@
         deck = prev.deck;
         board = prev.board;
         score = prev.score;
+        puzzleFoundSets = prev.puzzleFoundSets || [];
         selectedIndices = [];
         hintIndices = [];
+        flashOkIndices = [];
         hintCursor = -1;
         isGameOver = false;
         document.getElementById('end-overlay').style.display = 'none';
@@ -1691,51 +1977,88 @@
         var rewardBox = document.getElementById('end-reward-box');
         var endUndoBtn = document.getElementById('btn-end-undo');
 
-        scoreLine.textContent = t('endScoreLine').replace('{score}', score);
+        var maxScore = getMaxPossibleScore();
+        scoreLine.textContent = t('endScoreLine').replace('{score}', score).replace('{max}', maxScore);
+        if (endUndoBtn) endUndoBtn.style.display = 'none';
 
-        if (isPerfect) {
-          perfectGamesCount++;
-          savePrefs();
-          updateUnlockUI();
-
+        if (gameMode === 'puzzle') {
           logoBox.className = 'end-logo-box perfect';
-          badge.innerHTML = t('endPerfectBadge');
+          badge.innerHTML = t('endPuzzleBadge');
           badge.style.display = 'inline-block';
-          title.textContent = t('endPerfectTitle');
-          subtitle.textContent = t('endPerfectSub');
-
-          rewardBox.style.display = 'block';
-          if (perfectGamesCount === 1) {
-            rewardBox.innerHTML = t('reward1');
-          } else if (perfectGamesCount === 2) {
-            rewardBox.innerHTML = t('reward2');
-          } else if (perfectGamesCount === 3) {
-            rewardBox.innerHTML = t('reward3');
-          } else {
-            rewardBox.innerHTML = t('rewardMore').replace('{n}', perfectGamesCount);
-          }
-
-          if (endUndoBtn) endUndoBtn.style.display = 'none';
-          launchSymbolConfetti();
-        } else {
-          logoBox.className = 'end-logo-box';
-          badge.style.display = 'none';
-          title.textContent = t('endNormalTitle');
-          subtitle.textContent = t('endNormalSub').replace('{n}', remainingCount);
+          title.textContent = t('endPuzzleTitle');
+          subtitle.textContent = t('endPuzzleSub').replace('{tot}', maxScore);
           rewardBox.style.display = 'none';
-          if (endUndoBtn) endUndoBtn.style.display = 'none';
+          launchSymbolConfetti();
+        } else if (gameMode === 'junior') {
+          if (isPerfect) {
+            logoBox.className = 'end-logo-box perfect';
+            badge.innerHTML = t('endJuniorPerfectBadge');
+            badge.style.display = 'inline-block';
+            title.textContent = t('endJuniorPerfectTitle');
+            subtitle.textContent = t('endJuniorPerfectSub');
+            rewardBox.style.display = 'block';
+            rewardBox.innerHTML = t('endJuniorNote');
+            launchSymbolConfetti();
+          } else {
+            logoBox.className = 'end-logo-box';
+            badge.style.display = 'none';
+            title.textContent = t('endNormalTitle');
+            subtitle.textContent = t('endNormalSub').replace('{n}', remainingCount);
+            rewardBox.style.display = 'none';
+          }
+        } else {
+          if (isPerfect) {
+            perfectGamesCount++;
+            savePrefs();
+            updateUnlockUI();
+
+            logoBox.className = 'end-logo-box perfect';
+            badge.innerHTML = t('endPerfectBadge');
+            badge.style.display = 'inline-block';
+            title.textContent = t('endPerfectTitle');
+            subtitle.textContent = t('endPerfectSub');
+
+            rewardBox.style.display = 'block';
+            if (perfectGamesCount === 1) {
+              rewardBox.innerHTML = t('reward1');
+            } else if (perfectGamesCount === 2) {
+              rewardBox.innerHTML = t('reward2');
+            } else if (perfectGamesCount === 3) {
+              rewardBox.innerHTML = t('reward3');
+            } else {
+              rewardBox.innerHTML = t('rewardMore').replace('{n}', perfectGamesCount);
+            }
+
+            launchSymbolConfetti();
+          } else {
+            logoBox.className = 'end-logo-box';
+            badge.style.display = 'none';
+            title.textContent = t('endNormalTitle');
+            subtitle.textContent = t('endNormalSub').replace('{n}', remainingCount);
+            rewardBox.style.display = 'none';
+          }
         }
 
         document.getElementById('end-overlay').style.display = 'flex';
       }
 
-      function createFullDeck() {
+      function createDeckForCurrentMode() {
         var d = [];
-        for (var shape = 0; shape < 3; shape++) {
-          for (var count = 1; count <= 3; count++) {
-            for (var fill = 0; fill < 3; fill++) {
+        if (gameMode === 'junior') {
+          for (var shape = 0; shape < 3; shape++) {
+            for (var count = 1; count <= 3; count++) {
               for (var color = 0; color < 3; color++) {
-                d.push({ shape: shape, count: count, fill: fill, color: color });
+                d.push({ shape: shape, count: count, fill: 2, color: color });
+              }
+            }
+          }
+        } else {
+          for (var s = 0; s < 3; s++) {
+            for (var c = 1; c <= 3; c++) {
+              for (var f = 0; f < 3; f++) {
+                for (var col = 0; col < 3; col++) {
+                  d.push({ shape: s, count: c, fill: f, color: col });
+                }
               }
             }
           }
@@ -1765,11 +2088,12 @@
 
       function findAllSetsOnBoard() {
         var sets = [];
-        for (var i = 0; i < 16; i++) {
+        var len = board.length;
+        for (var i = 0; i < len; i++) {
           if (!board[i]) continue;
-          for (var j = i + 1; j < 16; j++) {
+          for (var j = i + 1; j < len; j++) {
             if (!board[j]) continue;
-            for (var k = j + 1; k < 16; k++) {
+            for (var k = j + 1; k < len; k++) {
               if (!board[k]) continue;
               if (isSet(board[i], board[j], board[k])) {
                 sets.push([i, j, k]);
@@ -1780,6 +2104,32 @@
         return sets;
       }
 
+      function sortTriple(arr) {
+        return arr.slice().sort(function(a, b) { return a - b; });
+      }
+
+      function isSameTriple(t1, t2) {
+        return t1[0] === t2[0] && t1[1] === t2[1] && t1[2] === t2[2];
+      }
+
+      function isPuzzleTripleAlreadyFound(triple) {
+        var s = sortTriple(triple);
+        for (var i = 0; i < puzzleFoundSets.length; i++) {
+          if (isSameTriple(puzzleFoundSets[i], s)) return true;
+        }
+        return false;
+      }
+
+      function getRemainingPuzzleSets() {
+        var rem = [];
+        for (var i = 0; i < puzzleAllSets.length; i++) {
+          if (!isPuzzleTripleAlreadyFound(puzzleAllSets[i])) {
+            rem.push(puzzleAllSets[i]);
+          }
+        }
+        return rem;
+      }
+
       function setStatus(text, type) {
         var el = document.getElementById('status');
         if (!el) return;
@@ -1788,21 +2138,24 @@
         if (statusTimeout) clearTimeout(statusTimeout);
         if (type) {
           statusTimeout = setTimeout(function() {
-            el.textContent = t('defaultStatus');
+            el.textContent = getDefaultStatusText();
             el.className = 'status-bar';
           }, 2600);
         }
       }
 
       function ensureValidBoard() {
-        for (var i = 0; i < 16; i++) {
+        if (gameMode === 'puzzle') return;
+
+        var slotCount = getBoardSlotCount();
+        for (var i = 0; i < slotCount; i++) {
           if (board[i] === null && deck.length > 0) {
             board[i] = deck.pop();
           }
         }
 
         var remainingOnBoard = 0;
-        for (var r0 = 0; r0 < 16; r0++) {
+        for (var r0 = 0; r0 < slotCount; r0++) {
           if (board[r0] !== null) remainingOnBoard++;
         }
 
@@ -1814,7 +2167,7 @@
         var attempts = 0;
         while (findAllSetsOnBoard().length === 0) {
           var activeCards = [];
-          for (var a = 0; a < 16; a++) {
+          for (var a = 0; a < slotCount; a++) {
             if (board[a] !== null) activeCards.push(board[a]);
           }
           if (deck.length === 0 || attempts > 30) {
@@ -1823,13 +2176,42 @@
           }
           for (var c = 0; c < activeCards.length; c++) deck.push(activeCards[c]);
           shuffle(deck);
-          for (var r = 0; r < 16; r++) board[r] = null;
-          for (var n = 0; n < 16 && deck.length > 0; n++) {
+          for (var r = 0; r < slotCount; r++) board[r] = null;
+          for (var n = 0; n < slotCount && deck.length > 0; n++) {
             board[n] = deck.pop();
           }
           attempts++;
           setStatus(t('msgReshuffle'), 'info');
         }
+      }
+
+      function generatePuzzleBoard() {
+        var slotCount = 12;
+        var bestBoard = null;
+        var bestSets = [];
+
+        for (var attempt = 0; attempt < 150; attempt++) {
+          var fullDeck = createDeckForCurrentMode();
+          board = fullDeck.slice(0, slotCount);
+          var sets = findAllSetsOnBoard();
+          if (sets.length >= 4 && sets.length <= 6) {
+            bestBoard = board;
+            bestSets = sets;
+            break;
+          }
+          if (sets.length >= 3 && (!bestBoard || Math.abs(sets.length - 5) < Math.abs(bestSets.length - 5))) {
+            bestBoard = board.slice();
+            bestSets = sets;
+          }
+        }
+
+        board = bestBoard || createDeckForCurrentMode().slice(0, slotCount);
+        deck = [];
+        puzzleAllSets = [];
+        for (var i = 0; i < bestSets.length; i++) {
+          puzzleAllSets.push(sortTriple(bestSets[i]));
+        }
+        puzzleFoundSets = [];
       }
 
       function renderSingleSVG(card) {
@@ -1854,6 +2236,46 @@
         }
       }
 
+      function renderMiniCardHTML(card) {
+        var single = renderSingleSVG(card);
+        var inner = '';
+        for (var c = 0; c < card.count; c++) inner += single;
+        return '<div class="mini-card">' + inner + '</div>';
+      }
+
+      function renderPuzzlePanel() {
+        var panel = document.getElementById('puzzle-found-panel');
+        var slotsEl = document.getElementById('puzzle-slots');
+        var ratioEl = document.getElementById('puzzle-found-ratio');
+        if (!panel || !slotsEl || !ratioEl) return;
+
+        if (gameMode !== 'puzzle') {
+          panel.style.display = 'none';
+          return;
+        }
+
+        panel.style.display = 'block';
+        var total = puzzleAllSets.length;
+        ratioEl.textContent = puzzleFoundSets.length + ' / ' + total;
+        slotsEl.innerHTML = '';
+
+        for (var i = 0; i < total; i++) {
+          var slotDiv = document.createElement('div');
+          if (i < puzzleFoundSets.length) {
+            slotDiv.className = 'puzzle-slot filled';
+            var triple = puzzleFoundSets[i];
+            slotDiv.innerHTML =
+              renderMiniCardHTML(board[triple[0]]) +
+              renderMiniCardHTML(board[triple[1]]) +
+              renderMiniCardHTML(board[triple[2]]);
+          } else {
+            slotDiv.className = 'puzzle-slot';
+            slotDiv.innerHTML = '<span style="font-size: 11px; color: var(--text-muted); font-weight: 700;">#' + (i + 1) + '</span>';
+          }
+          slotsEl.appendChild(slotDiv);
+        }
+      }
+
       function syncCardHeights() {
         var boardEl = document.getElementById('board');
         if (!boardEl) return;
@@ -1872,8 +2294,10 @@
         var boardEl = document.getElementById('board');
         if (!boardEl) return;
         boardEl.innerHTML = '';
+        boardEl.className = 'board' + (gameMode === 'junior' ? ' grid-3x3' : '');
 
-        for (var i = 0; i < 16; i++) {
+        var slotCount = getBoardSlotCount();
+        for (var i = 0; i < slotCount; i++) {
           (function(idx) {
             var card = board[idx];
             var div = document.createElement('div');
@@ -1882,7 +2306,9 @@
               div.className = 'card empty';
             } else {
               var cls = 'card';
-              if (hintIndices.indexOf(idx) !== -1) {
+              if (flashOkIndices.indexOf(idx) !== -1) {
+                cls += ' flash-ok';
+              } else if (hintIndices.indexOf(idx) !== -1) {
                 cls += ' hint';
               } else if (selectedIndices.indexOf(idx) !== -1) {
                 cls += ' selected';
@@ -1902,8 +2328,21 @@
         }
 
         syncCardHeights();
-        document.getElementById('score').textContent = score;
-        document.getElementById('deck-count').textContent = deck.length;
+
+        var rightStatEl = document.getElementById('header-right-stat');
+        if (gameMode === 'puzzle') {
+          document.getElementById('score').textContent = score + '/' + puzzleAllSets.length;
+          if (rightStatEl) {
+            rightStatEl.innerHTML = '<span>' + t('puzzleTarget') + '</span>: <span>12</span>';
+          }
+        } else {
+          document.getElementById('score').textContent = score;
+          if (rightStatEl) {
+            rightStatEl.innerHTML = '<span id="lbl-deck">' + t('deck') + '</span>: <span id="deck-count">' + deck.length + '</span>';
+          }
+        }
+
+        renderPuzzlePanel();
 
         var undoBtn = document.getElementById('btn-undo');
         if (undoBtn) {
@@ -1927,18 +2366,52 @@
           var i1 = selectedIndices[0];
           var i2 = selectedIndices[1];
           var i3 = selectedIndices[2];
+
           if (isSet(board[i1], board[i2], board[i3])) {
-            pushHistorySnapshot();
-            score++;
-            setStatus(t('msgSetOk'), 'ok');
-            board[i1] = null;
-            board[i2] = null;
-            board[i3] = null;
-            selectedIndices = [];
-            hintIndices = [];
-            hintCursor = -1;
-            ensureValidBoard();
-            saveGameState();
+            if (gameMode === 'puzzle') {
+              var sortedTriple = sortTriple([i1, i2, i3]);
+              if (isPuzzleTripleAlreadyFound(sortedTriple)) {
+                setStatus(t('msgPuzzleAlready'), 'info');
+                selectedIndices = [];
+                hintIndices = [];
+              } else {
+                pushHistorySnapshot();
+                puzzleFoundSets.push(sortedTriple);
+                score = puzzleFoundSets.length;
+                selectedIndices = [];
+                hintIndices = [];
+                hintCursor = -1;
+
+                flashOkIndices = [i1, i2, i3];
+                if (flashTimeout) clearTimeout(flashTimeout);
+                flashTimeout = setTimeout(function() {
+                  flashOkIndices = [];
+                  renderBoard();
+                }, 550);
+
+                if (puzzleFoundSets.length >= puzzleAllSets.length) {
+                  showEndModal(true, 0);
+                } else {
+                  setStatus(
+                    t('msgPuzzleFoundOk').replace('{cur}', puzzleFoundSets.length).replace('{tot}', puzzleAllSets.length),
+                    'ok'
+                  );
+                  saveGameState();
+                }
+              }
+            } else {
+              pushHistorySnapshot();
+              score++;
+              setStatus(t('msgSetOk'), 'ok');
+              board[i1] = null;
+              board[i2] = null;
+              board[i3] = null;
+              selectedIndices = [];
+              hintIndices = [];
+              hintCursor = -1;
+              ensureValidBoard();
+              saveGameState();
+            }
           } else {
             setStatus(t('msgSetErr'), 'err');
             selectedIndices = [];
@@ -1950,42 +2423,73 @@
       }
 
       function startNewGame() {
-        deck = createFullDeck();
-        for (var i = 0; i < 16; i++) board[i] = null;
         historyStack = [];
         selectedIndices = [];
         hintIndices = [];
+        flashOkIndices = [];
         hintCursor = -1;
         score = 0;
         isGameOver = false;
+        puzzleAllSets = [];
+        puzzleFoundSets = [];
+
         document.getElementById('confirm-new-overlay').style.display = 'none';
         document.getElementById('end-overlay').style.display = 'none';
         document.getElementById('confetti-layer').innerHTML = '';
-        setStatus(t('defaultStatus'));
-        ensureValidBoard();
+
+        if (gameMode === 'puzzle') {
+          generatePuzzleBoard();
+        } else {
+          deck = createDeckForCurrentMode();
+          var slotCount = getBoardSlotCount();
+          board = [];
+          for (var i = 0; i < slotCount; i++) board.push(null);
+          ensureValidBoard();
+        }
+
+        setStatus(getDefaultStatusText());
         saveGameState();
         renderBoard();
       }
 
       function requestNewGame() {
         if (!isGameOver && score > 0) {
-          document.getElementById('confirm-new-text').textContent = t('confirmNewText').replace('{score}', score);
+          var maxScore = getMaxPossibleScore();
+          document.getElementById('confirm-new-text').textContent = t('confirmNewText')
+            .replace('{score}', score)
+            .replace('{max}', maxScore);
           document.getElementById('confirm-new-overlay').style.display = 'flex';
         } else {
           startNewGame();
         }
       }
 
+      function switchGameMode(newMode) {
+        if (gameMode === newMode) return;
+        gameMode = newMode;
+        savePrefs();
+        updateModeUI();
+        startNewGame();
+      }
+
+      document.getElementById('mode-classic').onclick = function() { switchGameMode('classic'); };
+      document.getElementById('mode-junior').onclick = function() { switchGameMode('junior'); };
+      document.getElementById('mode-puzzle').onclick = function() { switchGameMode('puzzle'); };
+
       document.getElementById('lang-cs').onclick = function() {
         currentLang = 'cs';
         savePrefs();
         applyLanguageToUI();
+        if (!isGameOver) setStatus(getDefaultStatusText());
+        renderBoard();
       };
 
       document.getElementById('lang-en').onclick = function() {
         currentLang = 'en';
         savePrefs();
         applyLanguageToUI();
+        if (!isGameOver) setStatus(getDefaultStatusText());
+        renderBoard();
       };
 
       for (var cIdx = 0; cIdx < 3; cIdx++) {
@@ -2049,9 +2553,13 @@
         if (secretTapCount >= 5) {
           secretTapCount = 0;
           document.getElementById('settings-overlay').style.display = 'none';
+          gameMode = 'classic';
+          savePrefs();
+          updateModeUI();
           score = 27;
           deck = [];
-          for (var i = 0; i < 16; i++) board[i] = null;
+          board = [];
+          for (var i = 0; i < 16; i++) board.push(null);
           showEndModal(true, 0);
         }
       };
@@ -2079,6 +2587,7 @@
 
       document.getElementById('btn-settings').onclick = function() {
         rebuildSvgPatterns();
+        updateModeUI();
         updateUnlockUI();
         renderShapesPicker();
         document.getElementById('settings-overlay').style.display = 'flex';
@@ -2101,7 +2610,7 @@
 
       document.getElementById('btn-hint').onclick = function() {
         if (isGameOver) return;
-        var sets = findAllSetsOnBoard();
+        var sets = (gameMode === 'puzzle') ? getRemainingPuzzleSets() : findAllSetsOnBoard();
         if (sets.length > 0) {
           hintCursor = (hintCursor + 1) % sets.length;
           var currentSet = sets[hintCursor];
@@ -2140,11 +2649,20 @@
       document.getElementById('btn-play-again').onclick = startNewGame;
       window.onresize = syncCardHeights;
 
-      if (loadGameState()) {
+      // Asynchronní inicializace aplikace z nativního Android úložiště
+      await loadPrefs();
+      applyLanguageToUI();
+      rebuildSvgPatterns();
+
+      if (await loadGameState()) {
         if (!isGameOver) {
           setStatus(t('msgResume'), 'info');
+        } else {
+          setStatus(getDefaultStatusText());
         }
-        ensureValidBoard();
+        if (gameMode !== 'puzzle') {
+          ensureValidBoard();
+        }
         renderBoard();
       } else {
         startNewGame();
