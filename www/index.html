@@ -276,6 +276,7 @@
       overflow: visible;
     }
 
+    /* Přehled nalezených trojic v režimu Puzzle (2 sloupce, bez přetékání) */
     .puzzle-found-panel {
       width: 100%;
       max-width: 440px;
@@ -298,11 +299,12 @@
 
     .puzzle-slots {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 6px;
     }
 
     .puzzle-slot {
+      min-width: 0;
       height: 36px;
       border-radius: 8px;
       border: 1.5px dashed var(--border);
@@ -312,6 +314,7 @@
       gap: 4px;
       padding: 3px 5px;
       background: rgba(0, 0, 0, 0.02);
+      overflow: hidden;
     }
 
     body.royal-mode .puzzle-slot {
@@ -330,22 +333,30 @@
     }
 
     .mini-card {
-      flex: 1;
+      flex: 1 1 0;
+      min-width: 0;
       height: 100%;
       background: var(--card-board);
       border: 1px solid var(--border-board);
-      border-radius: 4px;
+      border-radius: 5px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 1px;
+      gap: 1.5px;
       padding: 2px;
+      overflow: hidden;
     }
 
     .mini-card svg {
-      height: 14px;
-      width: 14px;
+      height: 13px;
+      width: 13px;
+      flex: 0 0 auto;
       display: block;
+    }
+
+    .mini-card.cnt-3 svg {
+      height: 10.5px;
+      width: 10.5px;
     }
 
     .controls {
@@ -911,7 +922,7 @@
   <div id="puzzle-found-panel" class="puzzle-found-panel" style="display: none;">
     <div class="puzzle-found-title">
       <span id="lbl-puzzle-found">Odhalen&#233; trojice</span>
-      <span id="puzzle-found-ratio">0 / 5</span>
+      <span id="puzzle-found-ratio">0 / 6</span>
     </div>
     <div id="puzzle-slots" class="puzzle-slots"></div>
   </div>
@@ -1028,6 +1039,7 @@
       <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
         <button type="button" id="btn-end-undo"></button>
         <button type="button" id="btn-play-again" class="primary"></button>
+        <button type="button" id="btn-end-close"></button>
       </div>
     </div>
   </div>
@@ -1035,12 +1047,11 @@
   <script>
     window.onload = async function() {
       var STORAGE_PREFS = 'diffequa_prefs_v10';
-      var STORAGE_GAME = 'diffequa_saved_game_v3';
+      var STORAGE_GAME = 'diffequa_saved_game_v4';
       var DEFAULT_COLORS = ['#eb8672', '#8cc64d', '#e6c24f'];
       var ROYAL_COLORS = ['#f59e0b', '#f472b6', '#cbd5e1'];
       var DEFAULT_SHAPES = ['square', 'circle', 'triangle'];
 
-      // Dvojité úložiště: primárně nativní Android (@capacitor/preferences), záložně localStorage
       function getNativePrefsPlugin() {
         try {
           if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
@@ -1106,12 +1117,12 @@
           pageTitle: 'Diffequa \u2013 Logick\u00E1 hra',
           found: 'Nalezeno',
           deck: 'Bal\u00ED\u010Dek',
-          puzzleTarget: 'C\u00EDl',
+          puzzleCards: 'Karet',
           puzzleFoundTitle: 'Odhalen\u00E9 trojice v rozlo\u017Een\u00ED',
           settingsTooltip: 'Nastaven\u00ED',
           defaultStatusClassic: 'Najdi 3 karty: ka\u017Ed\u00E1 vlastnost v\u0161ude stejn\u00E1, nebo v\u0161ude jin\u00E1',
           defaultStatusJunior: 'Tr\u00E9nink (3 vlastnosti): tvar, po\u010Det a barva stejn\u00E9 nebo jin\u00E9',
-          defaultStatusPuzzle: 'Najdi v\u0161ech {tot} skryt\u00FDch trojic v tomto rozlo\u017Een\u00ED karet!',
+          defaultStatusPuzzle: 'Najdi v\u0161ech {tot} skryt\u00FDch trojic v m\u0159\u00ED\u017Ece 4\u00D74!',
           btnUndo: '\u21A9 Zp\u011Bt',
           btnUndoTitle: 'Vr\u00E1tit posledn\u00ED tah',
           btnHelp: 'N\u00E1vod',
@@ -1132,7 +1143,7 @@
           modePuzzleSub: 'Najdi v\u0161echny',
           modeDescClassic: '<strong>Pln\u00E1 hra (81 karet, 4 vlastnosti):</strong> Klasick\u00E1 m\u0159\u00ED\u017Eka 4\u00D74. Vy\u010Di\u0161t\u011Bn\u00ED cel\u00E9ho stolu (27/27) odemyk\u00E1 bonusov\u00E9 tvary a Zlatou edici.',
           modeDescJunior: '<strong>Za\u010D\u00E1te\u010Dnick\u00FD bal\u00ED\u010Dek (27 karet, 3 vlastnosti):</strong> V\u00FDpl\u0148 je v\u017Edy pln\u00E1, sleduje\u0161 jen tvar, po\u010Det a barvu v m\u0159\u00ED\u017Ece 3\u00D73 (celkem 9 trojic).',
-          modeDescPuzzle: '<strong>Najdi v\u0161echny (12 karet):</strong> Karty ze stolu nemiz\u00ED. Tv\u00FDm \u00FAkolem je postupn\u011B odhalit v\u0161ech 4 a\u017E 6 skryt\u00FDch trojic v jednom rozlo\u017Een\u00ED.',
+          modeDescPuzzle: '<strong>Najdi v\u0161echny (16 karet, 4\u00D74):</strong> Karty ze stolu nemiz\u00ED. Tv\u00FDm \u00FAkolem je postupn\u011B odhalit v\u0161ech 6 a\u017E 8 skryt\u00FDch trojic v jednom rozlo\u017Een\u00ED.',
           langTitle: 'Jazyk / Language',
           shapesTitle: 'V\u00FDb\u011Br 3 tvar\u016F',
           selectedCounter: 'Vybr\u00E1no: {n}/3',
@@ -1175,6 +1186,7 @@
           rewardMore: '\uD83D\uDC51 Celkem vy\u010Di\u0161t\u011Bn\u00FDch stol\u016F: <strong>{n}</strong>',
           btnEndUndo: '\u21A9 Vr\u00E1tit posledn\u00ED tah a zkusit jinak',
           btnPlayAgain: 'Hr\u00E1t znovu',
+          btnEndClose: 'Zobrazit plochu',
           msgSetOk: 'V\u00FDb\u011Brn\u011B! Spr\u00E1vn\u00E1 trojice Diffequa.',
           msgPuzzleFoundOk: 'Skv\u011Bl\u00E9! Odhalena {cur}. z {tot} trojic.',
           msgPuzzleAlready: 'Tuto trojici u\u017E m\u00E1\u0161 odhalenou! Zkus naj\u00EDt jinou.',
@@ -1183,6 +1195,7 @@
           msgUndo: 'Posledn\u00ED tah byl vr\u00E1cen zp\u011Bt.',
           msgHint: 'N\u00E1pov\u011Bda ({cur}/{tot}) \u2013 najdi t\u0159et\u00ED kartu!',
           msgResume: 'Pokra\u010Duje\u0161 v rozehran\u00E9 h\u0159e.',
+          msgGameFinished: 'Partie je dohran\u00E1 \u2013 stiskni Nov\u00E1 hra.',
           shapes: {
             square: '\u010Ctverec',
             circle: 'Kru\u017Enice',
@@ -1212,7 +1225,7 @@
                 '<strong>Hern\u00ED re\u017Eimy v Nastaven\u00ED (\u2699):</strong><br>' +
                 '&bull; <strong>Klasika (81 karet):</strong> Pln\u00E1 hra 4\u00D74 (odemyk\u00E1 odm\u011Bny).<br>' +
                 '&bull; <strong>Tr\u00E9nink (27 karet):</strong> M\u0159\u00ED\u017Eka 3\u00D73 jen se 3 vlastnostmi (bez v\u00FDpln\u011B).<br>' +
-                '&bull; <strong>Puzzle (Najdi v\u0161echny):</strong> Karty nemiz\u00ED, hled\u00E1\u0161 v\u0161ech 4\u20136 skryt\u00FDch trojic v jednom rozlo\u017Een\u00ED.' +
+                '&bull; <strong>Puzzle (Najdi v\u0161echny):</strong> M\u0159\u00ED\u017Eka 4\u00D74, karty nemiz\u00ED, hled\u00E1\u0161 v\u0161ech 6\u20138 skryt\u00FDch trojic v jednom rozlo\u017Een\u00ED.' +
               '</div>' +
               '<p style="color: #f87171;"><strong>Pozor:</strong> Pokud maj\u00ED nap\u0159. 2 karty stejnou barvu a 3. karta jinou, trojice neplat\u00ED!</p>'
             );
@@ -1222,12 +1235,12 @@
           pageTitle: 'Diffequa \u2013 Logic Game',
           found: 'Found',
           deck: 'Deck',
-          puzzleTarget: 'Goal',
+          puzzleCards: 'Cards',
           puzzleFoundTitle: 'Discovered Triples on This Board',
           settingsTooltip: 'Settings',
           defaultStatusClassic: 'Find 3 cards: each feature all the same, or all different',
           defaultStatusJunior: 'Training (3 features): shape, count & color all same or all different',
-          defaultStatusPuzzle: 'Find all {tot} hidden triples in this fixed card layout!',
+          defaultStatusPuzzle: 'Find all {tot} hidden triples in the 4\u00D74 grid!',
           btnUndo: '\u21A9 Undo',
           btnUndoTitle: 'Undo last move',
           btnHelp: 'Rules',
@@ -1248,7 +1261,7 @@
           modePuzzleSub: 'Find All',
           modeDescClassic: '<strong>Full Game (81 cards, 4 features):</strong> Classic 4\u00D74 grid. Clearing the entire board (27/27) unlocks bonus shapes and the Royal Gold Edition.',
           modeDescJunior: '<strong>Starter Deck (27 cards, 3 features):</strong> Fill is always solid; focus only on shape, count, and color in a 3\u00D73 grid (9 triples total).',
-          modeDescPuzzle: '<strong>Find All (12 cards):</strong> Cards stay on the table. Your goal is to uncover all 4 to 6 hidden triples hidden in a single layout.',
+          modeDescPuzzle: '<strong>Find All (16 cards, 4\u00D74):</strong> Cards stay on the table. Your goal is to uncover all 6 to 8 hidden triples in a single layout.',
           langTitle: 'Jazyk / Language',
           shapesTitle: 'Choose 3 Shapes',
           selectedCounter: 'Selected: {n}/3',
@@ -1291,6 +1304,7 @@
           rewardMore: '\uD83D\uDC51 Total cleared boards: <strong>{n}</strong>',
           btnEndUndo: '\u21A9 Undo last move & try another way',
           btnPlayAgain: 'Play Again',
+          btnEndClose: 'View Board',
           msgSetOk: 'Great! Valid Diffequa triple.',
           msgPuzzleFoundOk: 'Nice! Found triple {cur} of {tot}.',
           msgPuzzleAlready: 'You already found this triple! Look for another one.',
@@ -1299,6 +1313,7 @@
           msgUndo: 'Last move undone.',
           msgHint: 'Hint ({cur}/{tot}) \u2013 find the 3rd card!',
           msgResume: 'Resuming your saved game.',
+          msgGameFinished: 'Game finished \u2013 tap New Game to play again.',
           shapes: {
             square: 'Square',
             circle: 'Circle',
@@ -1328,7 +1343,7 @@
                 '<strong>Game Modes in Settings (\u2699):</strong><br>' +
                 '&bull; <strong>Classic (81 cards):</strong> Full 4\u00D74 game (unlocks rewards).<br>' +
                 '&bull; <strong>Training (27 cards):</strong> 3\u00D73 grid with only 3 features (solid fill).<br>' +
-                '&bull; <strong>Puzzle (Find All):</strong> Cards stay put; uncover all 4\u20136 hidden triples in one layout.' +
+                '&bull; <strong>Puzzle (Find All):</strong> 4\u00D74 grid; cards stay put, uncover all 6\u20138 hidden triples in one layout.' +
               '</div>' +
               '<p style="color: #f87171;"><strong>Watch out:</strong> If 2 cards share the same color and the 3rd card has a different color, it is NOT valid!</p>'
             );
@@ -1486,8 +1501,9 @@
       }
 
       function getDefaultStatusText() {
+        if (isGameOver) return t('msgGameFinished');
         if (gameMode === 'junior') return t('defaultStatusJunior');
-        if (gameMode === 'puzzle') return t('defaultStatusPuzzle').replace('{tot}', puzzleAllSets.length || 5);
+        if (gameMode === 'puzzle') return t('defaultStatusPuzzle').replace('{tot}', puzzleAllSets.length || 6);
         return t('defaultStatusClassic');
       }
 
@@ -1549,6 +1565,7 @@
         document.getElementById('btn-close-help').textContent = t('helpClose');
         document.getElementById('btn-end-undo').innerHTML = t('btnEndUndo');
         document.getElementById('btn-play-again').textContent = t('btnPlayAgain');
+        document.getElementById('btn-end-close').textContent = t('btnEndClose');
 
         var csBtn = document.getElementById('lang-cs');
         var enBtn = document.getElementById('lang-en');
@@ -1840,13 +1857,12 @@
 
       function getBoardSlotCount() {
         if (gameMode === 'junior') return 9;
-        if (gameMode === 'puzzle') return 12;
-        return 16;
+        return 16; // Classic i Puzzle mají oba mřížku 4×4 (16 karet)
       }
 
       function getMaxPossibleScore() {
         if (gameMode === 'junior') return 9;
-        if (gameMode === 'puzzle') return puzzleAllSets.length || 5;
+        if (gameMode === 'puzzle') return puzzleAllSets.length || 6;
         return 27;
       }
 
@@ -1934,11 +1950,18 @@
         flashOkIndices = [];
         hintCursor = -1;
         isGameOver = false;
-        document.getElementById('end-overlay').style.display = 'none';
-        document.getElementById('confetti-layer').innerHTML = '';
+        closeEndModal();
         setStatus(t('msgUndo'), 'info');
         saveGameState();
         renderBoard();
+      }
+
+      function closeEndModal() {
+        document.getElementById('end-overlay').style.display = 'none';
+        document.getElementById('confetti-layer').innerHTML = '';
+        if (isGameOver) {
+          setStatus(t('msgGameFinished'));
+        }
       }
 
       function launchSymbolConfetti() {
@@ -2186,20 +2209,20 @@
       }
 
       function generatePuzzleBoard() {
-        var slotCount = 12;
+        var slotCount = 16; // Mřížka 4 × 4 (16 karet) se 6 až 8 skrytými trojicemi
         var bestBoard = null;
         var bestSets = [];
 
-        for (var attempt = 0; attempt < 150; attempt++) {
+        for (var attempt = 0; attempt < 200; attempt++) {
           var fullDeck = createDeckForCurrentMode();
           board = fullDeck.slice(0, slotCount);
           var sets = findAllSetsOnBoard();
-          if (sets.length >= 4 && sets.length <= 6) {
+          if (sets.length >= 6 && sets.length <= 8) {
             bestBoard = board;
             bestSets = sets;
             break;
           }
-          if (sets.length >= 3 && (!bestBoard || Math.abs(sets.length - 5) < Math.abs(bestSets.length - 5))) {
+          if (sets.length >= 4 && (!bestBoard || Math.abs(sets.length - 7) < Math.abs(bestSets.length - 7))) {
             bestBoard = board.slice();
             bestSets = sets;
           }
@@ -2240,7 +2263,7 @@
         var single = renderSingleSVG(card);
         var inner = '';
         for (var c = 0; c < card.count; c++) inner += single;
-        return '<div class="mini-card">' + inner + '</div>';
+        return '<div class="mini-card cnt-' + card.count + '">' + inner + '</div>';
       }
 
       function renderPuzzlePanel() {
@@ -2333,7 +2356,7 @@
         if (gameMode === 'puzzle') {
           document.getElementById('score').textContent = score + '/' + puzzleAllSets.length;
           if (rightStatEl) {
-            rightStatEl.innerHTML = '<span>' + t('puzzleTarget') + '</span>: <span>12</span>';
+            rightStatEl.innerHTML = '<span>' + t('puzzleCards') + '</span>: <span>16</span>';
           }
         } else {
           document.getElementById('score').textContent = score;
@@ -2434,8 +2457,7 @@
         puzzleFoundSets = [];
 
         document.getElementById('confirm-new-overlay').style.display = 'none';
-        document.getElementById('end-overlay').style.display = 'none';
-        document.getElementById('confetti-layer').innerHTML = '';
+        closeEndModal();
 
         if (gameMode === 'puzzle') {
           generatePuzzleBoard();
@@ -2480,7 +2502,7 @@
         currentLang = 'cs';
         savePrefs();
         applyLanguageToUI();
-        if (!isGameOver) setStatus(getDefaultStatusText());
+        setStatus(getDefaultStatusText());
         renderBoard();
       };
 
@@ -2488,7 +2510,7 @@
         currentLang = 'en';
         savePrefs();
         applyLanguageToUI();
-        if (!isGameOver) setStatus(getDefaultStatusText());
+        setStatus(getDefaultStatusText());
         renderBoard();
       };
 
@@ -2647,9 +2669,13 @@
       };
 
       document.getElementById('btn-play-again').onclick = startNewGame;
+      document.getElementById('btn-end-close').onclick = closeEndModal;
+      document.getElementById('end-overlay').onclick = function(e) {
+        if (e.target === this) closeEndModal();
+      };
+
       window.onresize = syncCardHeights;
 
-      // Asynchronní inicializace aplikace z nativního Android úložiště
       await loadPrefs();
       applyLanguageToUI();
       rebuildSvgPatterns();
