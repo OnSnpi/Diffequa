@@ -276,7 +276,6 @@
       overflow: visible;
     }
 
-    /* Přehled nalezených trojic v režimu Puzzle (2 sloupce, bez přetékání) */
     .puzzle-found-panel {
       width: 100%;
       max-width: 440px;
@@ -946,7 +945,7 @@
     </div>
   </div>
 
-  <!-- Okno s nastavením režimu, jazyka, barev, tvarů a statistikou -->
+  <!-- Okno s nastavením režimu, jazyka, zvuku, vibrací, barev, tvarů a statistikou -->
   <div id="settings-overlay" class="overlay">
     <div class="modal">
       <h2 id="settings-title" style="cursor: pointer;">Nastaven&#237; hry</h2>
@@ -972,6 +971,14 @@
       <div class="lang-switch">
         <button type="button" id="lang-cs" class="lang-btn">&#127464;&#127487; &#268;e&#353;tina</button>
         <button type="button" id="lang-en" class="lang-btn">&#127468;&#127463; English</button>
+      </div>
+
+      <div class="section-title">
+        <span id="lbl-feedback-title">Zvuk a vibrace</span>
+      </div>
+      <div class="lang-switch">
+        <button type="button" id="toggle-sound" class="lang-btn active">&#128266; Zvuky: Zap</button>
+        <button type="button" id="toggle-haptics" class="lang-btn active">&#128243; Vibrace: Zap</button>
       </div>
 
       <div class="section-title">
@@ -1046,11 +1053,14 @@
 
   <script>
     window.onload = async function() {
-      var STORAGE_PREFS = 'diffequa_prefs_v10';
+      var STORAGE_PREFS = 'diffequa_prefs_v11';
       var STORAGE_GAME = 'diffequa_saved_game_v4';
       var DEFAULT_COLORS = ['#eb8672', '#8cc64d', '#e6c24f'];
       var ROYAL_COLORS = ['#f59e0b', '#f472b6', '#cbd5e1'];
       var DEFAULT_SHAPES = ['square', 'circle', 'triangle'];
+
+      var soundEnabled = true;
+      var hapticsEnabled = true;
 
       function getNativePrefsPlugin() {
         try {
@@ -1059,6 +1069,111 @@
           }
         } catch (e) {}
         return null;
+      }
+
+      function getNativeHapticsPlugin() {
+        try {
+          if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics) {
+            return window.Capacitor.Plugins.Haptics;
+          }
+        } catch (e) {}
+        return null;
+      }
+
+      // Hmatová odezva (primárně nativní @capacitor/haptics, záložně Web Vibration API)
+      function triggerHaptic(type) {
+        if (!hapticsEnabled) return;
+        var haptics = getNativeHapticsPlugin();
+        if (haptics) {
+          try {
+            if (type === 'tap') {
+              haptics.impact({ style: 'LIGHT' });
+            } else if (type === 'deselect') {
+              haptics.impact({ style: 'LIGHT' });
+            } else if (type === 'match') {
+              haptics.notification({ type: 'SUCCESS' });
+            } else if (type === 'error') {
+              haptics.notification({ type: 'ERROR' });
+            } else if (type === 'win') {
+              haptics.notification({ type: 'SUCCESS' });
+              setTimeout(function() {
+                try { haptics.impact({ style: 'MEDIUM' }); } catch (e) {}
+              }, 160);
+            }
+            return;
+          } catch (e) {}
+        }
+
+        try {
+          if (navigator && navigator.vibrate) {
+            if (type === 'tap' || type === 'deselect') navigator.vibrate(12);
+            else if (type === 'match') navigator.vibrate([20, 45, 35]);
+            else if (type === 'error') navigator.vibrate([40, 30, 40]);
+            else if (type === 'win') navigator.vibrate([30, 50, 30, 50, 70]);
+          }
+        } catch (e) {}
+      }
+
+      // Syntetické zvuky přes Web Audio API (nulová velikost, 100 % offline)
+      var audioCtx = null;
+      function getAudioContext() {
+        if (!audioCtx) {
+          var Ctx = window.AudioContext || window.webkitAudioContext;
+          if (Ctx) audioCtx = new Ctx();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          try { audioCtx.resume(); } catch (e) {}
+        }
+        return audioCtx;
+      }
+
+      function playTone(ctx, freq, startOffset, duration, waveType, peakGain, slideToFreq) {
+        var now = ctx.currentTime + startOffset;
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = waveType || 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        if (slideToFreq) {
+          osc.frequency.exponentialRampToValueAtTime(slideToFreq, now + duration);
+        }
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(peakGain, now + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + duration + 0.02);
+      }
+
+      function playSound(type, stepIndex) {
+        if (!soundEnabled) return;
+        try {
+          var ctx = getAudioContext();
+          if (!ctx) return;
+
+          if (type === 'tap') {
+            var notes = [523.25, 659.25, 783.99]; // C5, E5, G5 podle pořadí karty
+            var f = notes[(stepIndex || 0) % 3];
+            playTone(ctx, f, 0, 0.075, 'triangle', 0.11, f * 0.72);
+          } else if (type === 'deselect') {
+            playTone(ctx, 440, 0, 0.065, 'sine', 0.08, 349.23);
+          } else if (type === 'match') {
+            playTone(ctx, 523.25, 0.00, 0.16, 'sine', 0.11); // C5
+            playTone(ctx, 659.25, 0.06, 0.18, 'sine', 0.11); // E5
+            playTone(ctx, 783.99, 0.12, 0.22, 'sine', 0.12); // G5
+            playTone(ctx, 1046.5, 0.18, 0.30, 'sine', 0.10); // C6
+          } else if (type === 'error') {
+            playTone(ctx, 196.00, 0.00, 0.11, 'triangle', 0.10, 174.61); // G3 -> F3
+            playTone(ctx, 164.81, 0.09, 0.15, 'triangle', 0.10, 146.83); // E3 -> D3
+          } else if (type === 'win') {
+            playTone(ctx, 523.25, 0.00, 0.18, 'triangle', 0.12); // C5
+            playTone(ctx, 659.25, 0.08, 0.18, 'triangle', 0.12); // E5
+            playTone(ctx, 783.99, 0.16, 0.20, 'triangle', 0.12); // G5
+            playTone(ctx, 987.77, 0.24, 0.24, 'triangle', 0.11); // B5
+            playTone(ctx, 1046.5, 0.32, 0.42, 'sine', 0.14);     // C6
+          }
+        } catch (e) {}
       }
 
       async function storageWrite(key, valueStr) {
@@ -1145,6 +1260,11 @@
           modeDescJunior: '<strong>Za\u010D\u00E1te\u010Dnick\u00FD bal\u00ED\u010Dek (27 karet, 3 vlastnosti):</strong> V\u00FDpl\u0148 je v\u017Edy pln\u00E1, sleduje\u0161 jen tvar, po\u010Det a barvu v m\u0159\u00ED\u017Ece 3\u00D73 (celkem 9 trojic).',
           modeDescPuzzle: '<strong>Najdi v\u0161echny (16 karet, 4\u00D74):</strong> Karty ze stolu nemiz\u00ED. Tv\u00FDm \u00FAkolem je postupn\u011B odhalit v\u0161ech 6 a\u017E 8 skryt\u00FDch trojic v jednom rozlo\u017Een\u00ED.',
           langTitle: 'Jazyk / Language',
+          feedbackTitle: 'Zvuk a vibrace',
+          soundOn: '\uD83D\uDD0A Zvuky: Zap',
+          soundOff: '\uD83D\uDD07 Zvuky: Vyp',
+          hapticsOn: '\uD83D\uDCF3 Vibrace: Zap',
+          hapticsOff: '\uD83D\uDCF4 Vibrace: Vyp',
           shapesTitle: 'V\u00FDb\u011Br 3 tvar\u016F',
           selectedCounter: 'Vybr\u00E1no: {n}/3',
           winSuffix: '. v\u00FDhra',
@@ -1263,6 +1383,11 @@
           modeDescJunior: '<strong>Starter Deck (27 cards, 3 features):</strong> Fill is always solid; focus only on shape, count, and color in a 3\u00D73 grid (9 triples total).',
           modeDescPuzzle: '<strong>Find All (16 cards, 4\u00D74):</strong> Cards stay on the table. Your goal is to uncover all 6 to 8 hidden triples in a single layout.',
           langTitle: 'Jazyk / Language',
+          feedbackTitle: 'Sound & Haptics',
+          soundOn: '\uD83D\uDD0A Sound: On',
+          soundOff: '\uD83D\uDD07 Sound: Off',
+          hapticsOn: '\uD83D\uDCF3 Haptics: On',
+          hapticsOff: '\uD83D\uDCF4 Haptics: Off',
           shapesTitle: 'Choose 3 Shapes',
           selectedCounter: 'Selected: {n}/3',
           winSuffix: ' win(s)',
@@ -1471,6 +1596,12 @@
             if (parsed && (parsed.mode === 'classic' || parsed.mode === 'junior' || parsed.mode === 'puzzle')) {
               gameMode = parsed.mode;
             }
+            if (parsed && typeof parsed.sound === 'boolean') {
+              soundEnabled = parsed.sound;
+            }
+            if (parsed && typeof parsed.haptics === 'boolean') {
+              hapticsEnabled = parsed.haptics;
+            }
             if (parsed && parsed.colors && parsed.colors.length === 3) {
               userColors = [parsed.colors[0], parsed.colors[1], parsed.colors[2]];
             }
@@ -1492,6 +1623,8 @@
           storageWrite(STORAGE_PREFS, JSON.stringify({
             lang: currentLang,
             mode: gameMode,
+            sound: soundEnabled,
+            haptics: hapticsEnabled,
             colors: userColors,
             shapes: selectedShapes,
             perfectGames: perfectGamesCount,
@@ -1521,6 +1654,19 @@
         }
       }
 
+      function updateFeedbackUI() {
+        var sndBtn = document.getElementById('toggle-sound');
+        var hapBtn = document.getElementById('toggle-haptics');
+        if (sndBtn) {
+          sndBtn.className = 'lang-btn' + (soundEnabled ? ' active' : '');
+          sndBtn.innerHTML = soundEnabled ? t('soundOn') : t('soundOff');
+        }
+        if (hapBtn) {
+          hapBtn.className = 'lang-btn' + (hapticsEnabled ? ' active' : '');
+          hapBtn.innerHTML = hapticsEnabled ? t('hapticsOn') : t('hapticsOff');
+        }
+      }
+
       function applyLanguageToUI() {
         document.documentElement.lang = currentLang;
         document.title = t('pageTitle');
@@ -1546,6 +1692,7 @@
         document.getElementById('mode-puzzle').innerHTML = t('modePuzzleName') + '<small>' + t('modePuzzleSub') + '</small>';
 
         document.getElementById('lbl-lang-title').textContent = t('langTitle');
+        document.getElementById('lbl-feedback-title').textContent = t('feedbackTitle');
         document.getElementById('lbl-shapes-title').textContent = t('shapesTitle');
         document.getElementById('lbl-colors-title').textContent = t('colorsTitle');
         document.getElementById('royal-active-info').innerHTML = t('royalInfo');
@@ -1573,6 +1720,7 @@
         if (enBtn) enBtn.className = 'lang-btn' + (currentLang === 'en' ? ' active' : '');
 
         updateModeUI();
+        updateFeedbackUI();
         updateHelpContent();
         updateUnlockUI();
         checkColorContrast();
@@ -1790,6 +1938,7 @@
 
             if (locked) {
               item.onclick = function() {
+                triggerHaptic('error');
                 var hintBox = document.getElementById('unlock-hint-box');
                 if (hintBox && perfectGamesCount < 3) {
                   hintBox.style.background = royalMode ? 'rgba(245, 158, 11, 0.18)' : '#fef3c7';
@@ -1804,14 +1953,17 @@
               };
             } else {
               item.onclick = function() {
+                triggerHaptic('tap');
                 var idx = selectedShapes.indexOf(sh.id);
                 if (idx !== -1) {
                   selectedShapes.splice(idx, 1);
+                  playSound('deselect');
                 } else {
                   if (selectedShapes.length >= 3) {
                     selectedShapes.shift();
                   }
                   selectedShapes.push(sh.id);
+                  playSound('tap', selectedShapes.length - 1);
                 }
                 renderShapesPicker();
                 if (selectedShapes.length === 3) {
@@ -1857,7 +2009,7 @@
 
       function getBoardSlotCount() {
         if (gameMode === 'junior') return 9;
-        return 16; // Classic i Puzzle mají oba mřížku 4×4 (16 karet)
+        return 16;
       }
 
       function getMaxPossibleScore() {
@@ -1940,6 +2092,8 @@
 
       function undoLastMove() {
         if (isGameOver || historyStack.length === 0) return;
+        triggerHaptic('deselect');
+        playSound('deselect');
         var prev = historyStack.pop();
         deck = prev.deck;
         board = prev.board;
@@ -2005,6 +2159,8 @@
         if (endUndoBtn) endUndoBtn.style.display = 'none';
 
         if (gameMode === 'puzzle') {
+          triggerHaptic('win');
+          playSound('win');
           logoBox.className = 'end-logo-box perfect';
           badge.innerHTML = t('endPuzzleBadge');
           badge.style.display = 'inline-block';
@@ -2014,6 +2170,8 @@
           launchSymbolConfetti();
         } else if (gameMode === 'junior') {
           if (isPerfect) {
+            triggerHaptic('win');
+            playSound('win');
             logoBox.className = 'end-logo-box perfect';
             badge.innerHTML = t('endJuniorPerfectBadge');
             badge.style.display = 'inline-block';
@@ -2031,6 +2189,8 @@
           }
         } else {
           if (isPerfect) {
+            triggerHaptic('win');
+            playSound('win');
             perfectGamesCount++;
             savePrefs();
             updateUnlockUI();
@@ -2209,7 +2369,7 @@
       }
 
       function generatePuzzleBoard() {
-        var slotCount = 16; // Mřížka 4 × 4 (16 karet) se 6 až 8 skrytými trojicemi
+        var slotCount = 16;
         var bestBoard = null;
         var bestSets = [];
 
@@ -2379,11 +2539,20 @@
         if (pos !== -1) {
           selectedIndices.splice(pos, 1);
           hintIndices = hintIndices.filter(function(h) { return h !== index; });
+          triggerHaptic('deselect');
+          playSound('deselect');
           renderBoard();
           return;
         }
 
         selectedIndices.push(index);
+
+        if (selectedIndices.length < 3) {
+          triggerHaptic('tap');
+          playSound('tap', selectedIndices.length - 1);
+          renderBoard();
+          return;
+        }
 
         if (selectedIndices.length === 3) {
           var i1 = selectedIndices[0];
@@ -2394,6 +2563,8 @@
             if (gameMode === 'puzzle') {
               var sortedTriple = sortTriple([i1, i2, i3]);
               if (isPuzzleTripleAlreadyFound(sortedTriple)) {
+                triggerHaptic('deselect');
+                playSound('deselect');
                 setStatus(t('msgPuzzleAlready'), 'info');
                 selectedIndices = [];
                 hintIndices = [];
@@ -2415,6 +2586,8 @@
                 if (puzzleFoundSets.length >= puzzleAllSets.length) {
                   showEndModal(true, 0);
                 } else {
+                  triggerHaptic('match');
+                  playSound('match');
                   setStatus(
                     t('msgPuzzleFoundOk').replace('{cur}', puzzleFoundSets.length).replace('{tot}', puzzleAllSets.length),
                     'ok'
@@ -2425,7 +2598,6 @@
             } else {
               pushHistorySnapshot();
               score++;
-              setStatus(t('msgSetOk'), 'ok');
               board[i1] = null;
               board[i2] = null;
               board[i3] = null;
@@ -2433,9 +2605,16 @@
               hintIndices = [];
               hintCursor = -1;
               ensureValidBoard();
+              if (!isGameOver) {
+                triggerHaptic('match');
+                playSound('match');
+                setStatus(t('msgSetOk'), 'ok');
+              }
               saveGameState();
             }
           } else {
+            triggerHaptic('error');
+            playSound('error');
             setStatus(t('msgSetErr'), 'err');
             selectedIndices = [];
             hintIndices = [];
@@ -2475,6 +2654,7 @@
       }
 
       function requestNewGame() {
+        triggerHaptic('tap');
         if (!isGameOver && score > 0) {
           var maxScore = getMaxPossibleScore();
           document.getElementById('confirm-new-text').textContent = t('confirmNewText')
@@ -2488,6 +2668,8 @@
 
       function switchGameMode(newMode) {
         if (gameMode === newMode) return;
+        triggerHaptic('tap');
+        playSound('tap', 1);
         gameMode = newMode;
         savePrefs();
         updateModeUI();
@@ -2499,6 +2681,7 @@
       document.getElementById('mode-puzzle').onclick = function() { switchGameMode('puzzle'); };
 
       document.getElementById('lang-cs').onclick = function() {
+        triggerHaptic('tap');
         currentLang = 'cs';
         savePrefs();
         applyLanguageToUI();
@@ -2507,11 +2690,26 @@
       };
 
       document.getElementById('lang-en').onclick = function() {
+        triggerHaptic('tap');
         currentLang = 'en';
         savePrefs();
         applyLanguageToUI();
         setStatus(getDefaultStatusText());
         renderBoard();
+      };
+
+      document.getElementById('toggle-sound').onclick = function() {
+        soundEnabled = !soundEnabled;
+        savePrefs();
+        updateFeedbackUI();
+        if (soundEnabled) playSound('tap', 2);
+      };
+
+      document.getElementById('toggle-haptics').onclick = function() {
+        hapticsEnabled = !hapticsEnabled;
+        savePrefs();
+        updateFeedbackUI();
+        if (hapticsEnabled) triggerHaptic('match');
       };
 
       for (var cIdx = 0; cIdx < 3; cIdx++) {
@@ -2542,6 +2740,7 @@
           var btn = document.getElementById('preset-' + presetIdx);
           if (btn) {
             btn.onclick = function() {
+              triggerHaptic('tap');
               royalMode = false;
               userColors = [presets[presetIdx][0], presets[presetIdx][1], presets[presetIdx][2]];
               applyThemeMode();
@@ -2557,6 +2756,8 @@
       var goldBtn = document.getElementById('preset-gold');
       if (goldBtn) {
         goldBtn.onclick = function() {
+          triggerHaptic('match');
+          playSound('match');
           royalMode = true;
           applyThemeMode();
           rebuildSvgPatterns();
@@ -2594,6 +2795,7 @@
         resetTapTimer = setTimeout(function() { resetTapCount = 0; }, 1500);
         if (resetTapCount >= 5) {
           resetTapCount = 0;
+          triggerHaptic('error');
           perfectGamesCount = 0;
           royalMode = false;
           selectedShapes = [DEFAULT_SHAPES[0], DEFAULT_SHAPES[1], DEFAULT_SHAPES[2]];
@@ -2608,8 +2810,10 @@
       };
 
       document.getElementById('btn-settings').onclick = function() {
+        triggerHaptic('tap');
         rebuildSvgPatterns();
         updateModeUI();
+        updateFeedbackUI();
         updateUnlockUI();
         renderShapesPicker();
         document.getElementById('settings-overlay').style.display = 'flex';
@@ -2617,6 +2821,7 @@
 
       document.getElementById('btn-close-settings').onclick = function() {
         if (selectedShapes.length === 3) {
+          triggerHaptic('tap');
           document.getElementById('settings-overlay').style.display = 'none';
         }
       };
@@ -2634,6 +2839,8 @@
         if (isGameOver) return;
         var sets = (gameMode === 'puzzle') ? getRemainingPuzzleSets() : findAllSetsOnBoard();
         if (sets.length > 0) {
+          triggerHaptic('tap');
+          playSound('tap', 1);
           hintCursor = (hintCursor + 1) % sets.length;
           var currentSet = sets[hintCursor];
           hintIndices = [currentSet[0], currentSet[1]];
@@ -2647,11 +2854,13 @@
       };
 
       document.getElementById('btn-help').onclick = function() {
+        triggerHaptic('tap');
         updateHelpContent();
         document.getElementById('help-overlay').style.display = 'flex';
       };
 
       document.getElementById('btn-close-help').onclick = function() {
+        triggerHaptic('tap');
         document.getElementById('help-overlay').style.display = 'none';
       };
 
@@ -2660,16 +2869,26 @@
       };
 
       document.getElementById('btn-new').onclick = requestNewGame;
-      document.getElementById('btn-confirm-yes').onclick = startNewGame;
+      document.getElementById('btn-confirm-yes').onclick = function() {
+        triggerHaptic('tap');
+        startNewGame();
+      };
       document.getElementById('btn-confirm-cancel').onclick = function() {
+        triggerHaptic('tap');
         document.getElementById('confirm-new-overlay').style.display = 'none';
       };
       document.getElementById('confirm-new-overlay').onclick = function(e) {
         if (e.target === this) this.style.display = 'none';
       };
 
-      document.getElementById('btn-play-again').onclick = startNewGame;
-      document.getElementById('btn-end-close').onclick = closeEndModal;
+      document.getElementById('btn-play-again').onclick = function() {
+        triggerHaptic('tap');
+        startNewGame();
+      };
+      document.getElementById('btn-end-close').onclick = function() {
+        triggerHaptic('tap');
+        closeEndModal();
+      };
       document.getElementById('end-overlay').onclick = function(e) {
         if (e.target === this) closeEndModal();
       };
