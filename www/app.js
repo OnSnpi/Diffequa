@@ -132,8 +132,10 @@ window.Diffequa.App = (function() {
     } catch (e) {}
   }
 
-  // --- Syntetické zvuky (Web Audio API) ---
+  // --- Syntetické zvuky (Web Audio API s organickými mikro-variacemi) ---
   var audioCtx = null;
+  var noiseBuffer = null;
+
   function getAudioContext() {
     if (!audioCtx) {
       var Ctx = window.AudioContext || window.webkitAudioContext;
@@ -145,23 +147,79 @@ window.Diffequa.App = (function() {
     return audioCtx;
   }
 
-  function playTone(ctx, freq, startOffset, duration, waveType, peakGain, slideToFreq) {
+  function getNoiseBuffer(ctx) {
+    if (!noiseBuffer || noiseBuffer.sampleRate !== ctx.sampleRate) {
+      var length = Math.floor(ctx.sampleRate * 0.5);
+      noiseBuffer = ctx.createBuffer(1, length, ctx.sampleRate);
+      var data = noiseBuffer.getChannelData(0);
+      for (var i = 0; i < length; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+    }
+    return noiseBuffer;
+  }
+
+  function jitter(base, ratio) {
+    return base * (1 + (Math.random() * 2 - 1) * ratio);
+  }
+
+  function playTone(ctx, freq, startOffset, duration, waveType, peakGain, slideToFreq, pitchRatio) {
+    var pRatio = (pitchRatio !== undefined) ? pitchRatio : 0.03;
+    var f = jitter(freq, pRatio);
+    var dur = jitter(duration, 0.14);
+    var atk = jitter(0.009, 0.35);
+    var gPeak = jitter(peakGain, 0.15);
+
     var now = ctx.currentTime + startOffset;
     var osc = ctx.createOscillator();
     var gain = ctx.createGain();
     osc.type = waveType || 'sine';
-    osc.frequency.setValueAtTime(freq, now);
+    osc.frequency.setValueAtTime(f, now);
     if (slideToFreq) {
-      osc.frequency.exponentialRampToValueAtTime(slideToFreq, now + duration);
+      osc.frequency.exponentialRampToValueAtTime(jitter(slideToFreq, pRatio), now + dur);
     }
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.linearRampToValueAtTime(peakGain, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    gain.gain.linearRampToValueAtTime(gPeak, now + atk);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
 
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start(now);
-    osc.stop(now + duration + 0.02);
+    osc.stop(now + dur + 0.02);
+  }
+
+  function playPaperSwish(ctx, startOffset, intensity) {
+    var scale = intensity || 1.0;
+    var now = ctx.currentTime + (startOffset || 0);
+
+    var src = ctx.createBufferSource();
+    src.buffer = getNoiseBuffer(ctx);
+
+    var filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    // Střední frekvence ~1750 Hz ±20 % (1400 - 2100 Hz)
+    var centerFreq = jitter(1750, 0.20);
+    filter.frequency.setValueAtTime(centerFreq, now);
+    filter.frequency.exponentialRampToValueAtTime(centerFreq * jitter(1.15, 0.10), now + 0.06);
+    filter.Q.setValueAtTime(jitter(2.2, 0.25), now);
+
+    // Attack 6–14 ms, decay 45–75 ms
+    var attack = 0.006 + Math.random() * 0.008;
+    var decay = 0.045 + Math.random() * 0.030;
+    var peakGain = jitter(0.085 * scale, 0.15);
+
+    var gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(peakGain, now + attack);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + attack + decay);
+
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    // Náhodný offset v šumovém bufferu, aby každý šust měl jiný mikro-vzorek
+    var maxOffset = Math.max(0, src.buffer.duration - (attack + decay + 0.05));
+    src.start(now, Math.random() * maxOffset, attack + decay + 0.03);
   }
 
   function playSound(type, stepIndex) {
@@ -173,27 +231,39 @@ window.Diffequa.App = (function() {
       if (type === 'tap') {
         var notes = [523.25, 659.25, 783.99];
         var f = notes[(stepIndex || 0) % 3];
-        playTone(ctx, f, 0, 0.075, 'triangle', 0.11, f * 0.72);
+        playTone(ctx, f, 0, 0.075, 'triangle', 0.105, f * 0.72, 0.045);
+        playPaperSwish(ctx, 0, 0.35);
       } else if (type === 'deselect') {
-        playTone(ctx, 440, 0, 0.065, 'sine', 0.08, 349.23);
+        playTone(ctx, 440, 0, 0.065, 'sine', 0.08, 349.23, 0.045);
+        playPaperSwish(ctx, 0, 0.28);
+      } else if (type === 'deal') {
+        // Bohatší „hrst“ karet při rozdání nebo promíchání balíčku
+        playPaperSwish(ctx, 0.00, 0.95);
+        playPaperSwish(ctx, 0.045 + Math.random() * 0.02, 1.15);
+        playPaperSwish(ctx, 0.095 + Math.random() * 0.025, 0.80);
       } else if (type === 'match') {
-        playTone(ctx, 523.25, 0.00, 0.16, 'sine', 0.11);
-        playTone(ctx, 659.25, 0.06, 0.18, 'sine', 0.11);
-        playTone(ctx, 783.99, 0.12, 0.22, 'sine', 0.12);
-        playTone(ctx, 1046.5, 0.18, 0.30, 'sine', 0.10);
+        playTone(ctx, 523.25, 0.00, 0.16, 'sine', 0.11, null, 0.012);
+        playTone(ctx, 659.25, 0.06 + Math.random() * 0.01, 0.18, 'sine', 0.11, null, 0.012);
+        playTone(ctx, 783.99, 0.12 + Math.random() * 0.012, 0.22, 'sine', 0.12, null, 0.012);
+        playTone(ctx, 1046.5, 0.18 + Math.random() * 0.015, 0.30, 'sine', 0.10, null, 0.012);
+        if (S.gameMode !== 'puzzle') {
+          // Jemné došustnutí doplněných karet na prázdná místa
+          playPaperSwish(ctx, 0.24, 0.65);
+          playPaperSwish(ctx, 0.29, 0.55);
+        }
       } else if (type === 'error') {
-        playTone(ctx, 196.00, 0.00, 0.11, 'triangle', 0.10, 174.61);
-        playTone(ctx, 164.81, 0.09, 0.15, 'triangle', 0.10, 146.83);
+        playTone(ctx, 196.00, 0.00, 0.11, 'triangle', 0.10, 174.61, 0.025);
+        playTone(ctx, 164.81, 0.09 + Math.random() * 0.015, 0.15, 'triangle', 0.10, 146.83, 0.025);
       } else if (type === 'win') {
-        playTone(ctx, 523.25, 0.00, 0.18, 'triangle', 0.12);
-        playTone(ctx, 659.25, 0.08, 0.18, 'triangle', 0.12);
-        playTone(ctx, 783.99, 0.16, 0.20, 'triangle', 0.12);
-        playTone(ctx, 987.77, 0.24, 0.24, 'triangle', 0.11);
-        playTone(ctx, 1046.5, 0.32, 0.42, 'sine', 0.14);
+        playTone(ctx, 523.25, 0.00, 0.18, 'triangle', 0.12, null, 0.01);
+        playTone(ctx, 659.25, 0.08, 0.18, 'triangle', 0.12, null, 0.01);
+        playTone(ctx, 783.99, 0.16, 0.20, 'triangle', 0.12, null, 0.01);
+        playTone(ctx, 987.77, 0.24, 0.24, 'triangle', 0.11, null, 0.01);
+        playTone(ctx, 1046.5, 0.32, 0.42, 'sine', 0.14, null, 0.01);
       }
     } catch (e) {}
   }
-
+  
   // --- Načítání a ukládání předvoleb i partie ---
   async function loadPrefs() {
     currentLang = detectDeviceLanguage();
@@ -884,13 +954,14 @@ window.Diffequa.App = (function() {
   function handleBoardValidationResult(res) {
     if (!res) return;
     if (res.reshuffled) {
+      playSound('deal');
       setStatus(t('msgReshuffle'), 'info');
     }
     if (res.ended) {
       showEndModal(res.isPerfect, res.remainingCount);
     }
   }
-
+  
   function onCardClick(index) {
     if (S.isGameOver) return;
     var pos = S.selectedIndices.indexOf(index);
@@ -993,12 +1064,13 @@ window.Diffequa.App = (function() {
     document.getElementById('confirm-new-overlay').style.display = 'none';
     closeEndModal();
     var res = Eng.startNewGame();
+    playSound('deal');
     setStatus(getDefaultStatusText());
     handleBoardValidationResult(res);
     saveGameState();
     renderBoard();
   }
-
+  
   function requestNewGame() {
     triggerHaptic('tap');
     if (!S.isGameOver && S.score > 0) {
